@@ -6,6 +6,7 @@ import FeaturesSection from "../components/StatsSection";
 import NxtCureSection from "../components/AboutSection";
 import TrustedBySection from "../components/TrustedBySection";
 import HowItStarted from "../components/HowItStarted";
+import SecondPatientProfile from "../components/SecondPatientProfile";
 import MeetTheTeamSection from "../components/MeetTheTeam";
 import StayUpdated from "../components/StayUpdated";
 import ContactForm from "../components/ContactForm";
@@ -77,6 +78,16 @@ export default function Home() {
         variants={sectionVariants}
       >
         <HowItStarted />
+      </motion.div>
+
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut", delay: 0.2 }}
+        variants={sectionVariants}
+      >
+        <SecondPatientProfile />
       </motion.div>
 
       <motion.div
