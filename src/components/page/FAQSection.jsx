@@ -14,7 +14,7 @@ export default function FAQSection() {
           <h1 className="cormorant text-5xl font-bold text-gray-800 mb-4">
 	  	Frequently Asked Questions (FAQ)
 	  </h1>
-          <h2 className="cormorant text-5xl font-bold text-gray-800 mb-4">
+          <h2 className="cormorant text-2xl font-bold text-gray-800 mb-4">
            	1. What if my eligibility or chance of a match is high for multiple trials? Will I need to undergo a full assessment for each one?
           </h2>
           <p
