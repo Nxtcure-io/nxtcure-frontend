@@ -23,7 +23,7 @@ export default function FAQSection() {
           >
 	  	If you are eligible for several trials, NxtCure will provide you with an Eligibility Score for each one to help you prioritize based on fit, travel distance, and likelihood of acceptance. You can then choose which trial(s) to explore further. We’ll provide direct links to trial coordinators so you can contact them to start the screening process.
           </p>
-	  <hr className="mt-4" />
+	  <hr className="mt-6" />
         </motion.div>
 
         <motion.div
@@ -42,6 +42,73 @@ export default function FAQSection() {
           >
 	  Your privacy is our top priority. All uploaded electronic health records (EHRs) are anonymized and HIPAA-compliant. Personally identifiable information—such as names, addresses, and full birth dates—is removed before data is analyzed. Patients may upload de-identified records themselves or request our team to de-identify their documents securely. We do not sell or share your data with third parties.
           </p>
+	  <hr className="mt-6" />
+        </motion.div>
+
+        <motion.div
+          className="w-full md:w-1/2 text-left mx-auto"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+        >
+          <h2 className="cormorant text-2xl font-bold text-gray-800 mb-4">
+	  	3.  When is NxtCure available?
+          </h2>
+          <p
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+		NxtCure will officially launch in Fall 2025, with early beta access beginning in August 2025 for select hospitals and patients. You can join the waitlist now to get early access and personalized onboarding.
+          </p>
+	  <hr className="mt-6" />
+        </motion.div>
+
+        <motion.div
+          className="w-full md:w-1/2 text-left mx-auto"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+        >
+          <h2 className="cormorant text-2xl font-bold text-gray-800 mb-4">
+		Why is NxtCure better than other clinical trial platforms?
+          </h2>
+          <p
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+		Unlike other platforms that simply list trials, NxtCure provides:
+          </p>
+	  <ul>
+          <li
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+	  	AI-driven matching from your real health data (EHRs)
+	  </li>
+          <li
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+		A Trial Accessibility Rater for researchers to assess inclusiveness
+	  </li>
+          <li
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+	  	A Treatment Dashboard for doctors to view FDA-approved options and trial gaps
+	  </li>
+          <li
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+	  	A focus on health equity and usability—especially for underrepresented and low-resource patients
+	  </li>
+
+	  </ul>
+	  	
+	  <hr className="mt-6" />
         </motion.div>
 
       </div>
