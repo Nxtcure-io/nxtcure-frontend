@@ -156,7 +156,7 @@ const Navbar = () => {
 		>
                   Patients
 		</button>
-                <button Add commentMore actions
+                <button
                   onClick={() => scrollToSection('researchers')}
                   className="block text-gray-700 w-full text-left"
                 >
@@ -171,12 +171,6 @@ const Navbar = () => {
               </div>
             )}
           </div>
-          <button 
-            onClick={() => scrollToSection('pricing')} 
-            className="block text-gray-700 font-medium w-full text-left"Add commentMore actions
-          >
-            Pricing
-	 </button>
           <button
             onClick={() => scrollToSection('faq')}
             className="block text-gray-700 font-medium w-full text-left"
