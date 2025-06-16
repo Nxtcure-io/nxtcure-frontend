@@ -30,6 +30,12 @@ const Navbar = () => {
 	setMenuOpen(false);
   };
 
+  const handleAboutClick = () => {
+	navigate('/about');
+	setDropdownOpen(false);
+	setMenuOpen(false);
+  };
+
   const scrollToSection = (sectionId) => {
 
 	 const element = document.getElementById(sectionId);
@@ -59,7 +65,7 @@ const Navbar = () => {
             Home
 	 </Link>
 	 <button
-	   onClick={() => scrollToSection('about')}
+           onClick={handleAboutClick}
             className="nav-txt text-gray-700 hover:text-blue-600 font-medium transition"
           >
             About

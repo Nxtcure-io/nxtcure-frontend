@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Home from "./pages/Home";
+import About from "./pages/About";
 import Patient from "./pages/Patients";
 import Results from "./pages/Results";
 import Navbar from "./components/Navbar";
@@ -44,6 +45,7 @@ function App() {
 	    <Routes>
 		<Route path="/" element={<Home />} />
 		<Route path="/nxtcure-frontend" element={<Home />} />
+		<Route path="/about" element={<About />} />
 		<Route path="/patients" element={<Patient />} />
 		<Route path="/results" element={<Results />} />
 	    </Routes>
