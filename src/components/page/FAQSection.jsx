@@ -80,7 +80,7 @@ export default function FAQSection() {
           >
 		Unlike other platforms that simply list trials, NxtCure provides:
           </p>
-	  <ul>
+	  <ul className="bg-gray-100 p-4 rounded shadow">
           <li
             className="text-gray-600 text-lg leading-relaxed"
             style={{ fontSize: "1rem" }}
