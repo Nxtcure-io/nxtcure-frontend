@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 export default function FAQSection() {
   return (
     <section className="bg-[radial-gradient(circle_at_center,_#F1E2FE_0%,_#F3ECFF_10%,_#EEF7FF_90%)] py-16 px-4 md:px-16">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start items-center justify-center gap-10 mb-5 mt-5">
+      <div className="max-w-6xl mx-auto flex flex-row md:flex-row items-start items-center justify-center gap-10 mb-5 mt-5">
         <motion.div
           className="w-full md:w-1/2 text-left mx-auto"
           initial={{ opacity: 0, y: 40 }}
