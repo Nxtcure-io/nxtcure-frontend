@@ -42,6 +42,7 @@ Rosa is living with a severe form of heart disease that has made day-to-day life
 	  <br />
 But at NxtCure, we believe stories like Rosa’s are exactly why clinical trials should exist- for those who have been told there are no more options or current options aren’t working. With our platform, we’re helping Rosa and her family explore clinical trials that may provide not just treatment, but hope.
 	  <br />
+	  <br />
 Because everyone deserves a chance and no one should be left behind.
 
           </p>
