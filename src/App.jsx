@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Home from "./pages/Home";
+import Patient from "./pages/Patients";
+import Results from "./pages/Results";
 import Navbar from "./components/Navbar";
 import Loader from "./components/Loader";
 
@@ -35,10 +38,16 @@ function App() {
             exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.7 }}
           >
+	  <Router>
             <Navbar />
             <main>
-              <Home />
+	    <Routes>
+		<Route path="/" element={<Home />} />
+		<Route path="/patients" element={<Patient />} />
+		<Route path="/results" element={<Results />} />
+	    </Routes>
             </main>
+	  </Router>
           </motion.div>
         )}
       </AnimatePresence>
