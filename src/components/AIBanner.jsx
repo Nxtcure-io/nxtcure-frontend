@@ -11,7 +11,7 @@ export default function AIBanner() {
         viewport={{ once: false, amount: 0.3 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-      	<img src={aibanner} alt="AI Banner" className="h-[40rem] mb-4" />
+      	<img src={aibanner} alt="AI Banner" className="h-[30rem] mb-4" />
       </motion.div>
     </section>
   );
