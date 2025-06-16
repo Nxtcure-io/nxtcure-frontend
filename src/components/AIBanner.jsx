@@ -13,7 +13,6 @@ export default function AIBanner() {
       >
       	<img src={aibanner} alt="AI Banner" className="h-10 mb-4" />
       </motion.div>
-      </a>
     </section>
   );
 }
