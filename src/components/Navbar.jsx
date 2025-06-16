@@ -36,6 +36,12 @@ const Navbar = () => {
 	setMenuOpen(false);
   };
 
+  const handleFAQClick = () => {
+	navigate('/faq');
+	setDropdownOpen(false);
+	setMenuOpen(false);
+  };
+
   const scrollToSection = (sectionId) => {
 
 	 const element = document.getElementById(sectionId);
@@ -166,7 +172,7 @@ const Navbar = () => {
             )}
           </div>
           <button
-            onClick={() => scrollToSection('faq')}
+            onClick={handleFAQClick}
             className="block text-gray-700 font-medium w-full text-left"
           >
             FAQs
