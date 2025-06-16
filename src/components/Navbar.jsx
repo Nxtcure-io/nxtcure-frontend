@@ -60,12 +60,6 @@ const Navbar = () => {
           </div>
 
           <a
-            href="#pricing"
-            className="nav-txt text-gray-700 hover:text-blue-600 font-medium transition"
-          >
-            Pricing
-          </a>
-          <a
             href="#faq"
             className="nav-txt text-gray-700 hover:text-blue-600 font-medium transition"
           >
