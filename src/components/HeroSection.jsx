@@ -26,7 +26,7 @@ export default function HeroSection() {
           transition={{ delay: 0.1, duration: 0.6 }}
         >
           <span className="cormorant text-black bg-clip-text">
-            Connect to Clinical Trials
+	  	AI powered Clinical Trials Matching
           </span>
         </motion.h1>
 
@@ -42,7 +42,7 @@ export default function HeroSection() {
           viewport={{ once: false, amount: 0.3 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
-          For Patients, Researchers, Doctors
+          For Patients and Physicians
         </motion.p>
 
         <motion.p
