@@ -72,7 +72,7 @@ export default function FAQSection() {
           transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
         >
           <h2 className="cormorant text-2xl font-bold text-gray-800 mb-4">
-		Why is NxtCure better than other clinical trial platforms?
+		4. Why is NxtCure better than other clinical trial platforms?
           </h2>
           <p
             className="text-gray-600 text-lg leading-relaxed"
@@ -106,6 +106,35 @@ export default function FAQSection() {
 	  	A focus on health equity and usability—especially for underrepresented and low-resource patients
 	  </li>
 
+	  </ul>
+	  	
+	  <hr className="mt-6" />
+        </motion.div>
+
+        <motion.div
+          className="w-full md:w-1/2 text-left mx-auto"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+        >
+          <h2 className="cormorant text-2xl font-bold text-gray-800 mb-4">
+		5. How can I use NxtCure?
+          </h2>
+	  <ul className="list-disc pl-5">
+          <li
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+	  	Patients: Upload your de-identified EHR, and receive personalized trial matches. Watch our demo video to walk through the upload and matching process step-by-step.
+
+	  </li>
+          <li
+            className="text-gray-600 text-lg leading-relaxed"
+            style={{ fontSize: "1rem" }}
+          >
+		Physicians: Log in to view FDA-approved treatments and refer patients to trials after evaluating all care options.
+	  </li>
 	  </ul>
 	  	
 	  <hr className="mt-6" />
