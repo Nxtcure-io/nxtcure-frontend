@@ -65,7 +65,7 @@ const Navbar = () => {
             Home
 	 </Link>
 	 <button
-           onClick={handlePatientsClick}
+           onClick={handleAboutClick}
             className="nav-txt text-gray-700 hover:text-blue-600 font-medium transition"
           >
             About
