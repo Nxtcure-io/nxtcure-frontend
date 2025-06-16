@@ -93,16 +93,10 @@ const Navbar = () => {
                   Patients
                 </button>
                 <button
-                  onClick={() => scrollToSection('researchers')}
-                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
-                >
-                  Researchers
-                </button>
-                <button
                   onClick={() => scrollToSection('doctors')}
                   className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
                 >
-                  Doctors
+		   Physicians
                 </button>
               </div>
             )}
@@ -163,16 +157,10 @@ const Navbar = () => {
                   Patients
 		</button>
                 <button
-                  onClick={() => scrollToSection('researchers')}
-                  className="block text-gray-700 w-full text-left"
-                >
-                  Researchers
-		</button>
-                <button Add commentMore actions
                   onClick={() => scrollToSection('doctors')}
                   className="block text-gray-700 w-full text-left"
                 >
-                  Doctors
+                  Physicians
                 </button>
               </div>
             )}
