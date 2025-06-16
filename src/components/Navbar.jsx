@@ -5,16 +5,50 @@ import NxtCureLogo from "../assets/logo-1.png";
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+	 const handleClickOutside = (event) => {
+		 if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+			 setDropdownOpen(false);
+		 }
+	 };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => {
+	document.removeEventListener('mousedown', handleClickOutside);
+  	};
+  }, []);
+
+  const handlePatientsClick = () => {
+	navigate('/patients');
+	setDropdownOpen(false);
+	setMenuOpen(false);
+  };
+
+
+  const scrollToSection = (sectionId) => {
+
+	 const element = document.getElementById(sectionId);
+	 if (element) {
+		element.scrollIntoView({ behavior: 'smooth' });
+	 }
+	 setMenuOpen(false);
+  };
 
   return (
     <header className="w-full shadow-sm sticky top-0 left-0 z-50 bg-white">
       <div className="max-w-[1440px] mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center space-x-2">
+	  <Link to="/" className="flex items-center space-x-2">
           <img src={NxtCureLogo} alt="Nxt Cure Logo" className="h-10 w-auto" />
           <span className="cormorant text-2xl font-bold text-gray-800">
             NxtCure
           </span>
+	  </Link>
         </div>
 
         {/* Desktop Nav */}
