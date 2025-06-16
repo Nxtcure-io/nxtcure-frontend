@@ -109,7 +109,7 @@ const Navbar = () => {
           </div>
 
 	<button
-	   onClick={() => scrollToSection('faq')}
+            onClick={handleFAQClick}
             className="nav-txt text-gray-700 hover:text-blue-600 font-medium transition"
           >
             FAQs
@@ -135,7 +135,7 @@ const Navbar = () => {
             Home
 	  </Link>
 	            <button 
-            onClick={() => scrollToSection('about')} 
+           onClick={handleAboutClick}
             className="block text-gray-700 font-medium w-full text-left"
           >
             About
