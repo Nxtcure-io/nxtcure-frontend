@@ -23,7 +23,7 @@ export default function FAQSection() {
           >
 	  	If you are eligible for several trials, NxtCure will provide you with an Eligibility Score for each one to help you prioritize based on fit, travel distance, and likelihood of acceptance. You can then choose which trial(s) to explore further. We’ll provide direct links to trial coordinators so you can contact them to start the screening process.
           </p>
-	  <hr>
+	  <hr />
         </motion.div>
 
         <motion.div
