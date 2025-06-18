@@ -21,7 +21,6 @@ const sectionVariants = {
 export default function Home() {
   return (
     <>
-      <WaitlistAlert />
       <motion.div
         initial="hidden"
         whileInView="visible"
@@ -42,6 +41,10 @@ export default function Home() {
       >
         <HeroSection />
       </motion.div>
+
+  <a href="https://docs.google.com/forms/d/e/1FAIpQLSfb_5tHzHN3NrhJFKpRhEhLkQIDQrXdH7jXGKK-PZrt4KBaAg/viewform?usp=sharing&ouid=105836010722188729845">
+      <WaitlistAlert />
+	  </a>
 
       <motion.div
         initial="hidden"
