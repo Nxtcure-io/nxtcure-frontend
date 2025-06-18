@@ -21,6 +21,7 @@ const sectionVariants = {
 export default function Home() {
   return (
     <>
+      <WaitlistAlert />
       <motion.div
         initial="hidden"
         whileInView="visible"
@@ -31,15 +32,6 @@ export default function Home() {
         <WaitlistBanner />
       </motion.div>
 
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        variants={sectionVariants}
-      >
-        <WaitlistAlert />
-      </motion.div>
 
       <motion.div
         initial="hidden"
