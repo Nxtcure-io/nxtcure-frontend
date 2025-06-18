@@ -19,16 +19,21 @@ export default function AboutSection() {
             className="text-gray-600 text-lg leading-relaxed"
             style={{ fontSize: "1rem" }}
           >
-		<b>NxtCure</b> is the ultimate tool for clinical trials—empowering patients and physicians to navigate the complex world of research and treatment innovation.
-		<br />
-	  	<br />
-		Every year, millions of patients are interested in joining clinical trials, yet <b>73%</b> report having no idea how to find them. At NxtCure, we help <b>patients</b> discover trials that match their unique medical profiles, while enabling <b>physicians</b> to assess the availability, necessity, and scientific rigor of clinical trials—especially when FDA-approved treatments already exist.
-	  	<br />
-	  	<br />
-		We’re built on the belief that today’s clinical trials are often too exclusive. Overly strict inclusion and exclusion criteria make recruitment difficult and leave many patients behind. As <a href="https://trialsjournal.biomedcentral.com/articles/10.1186/s13063-020-4139-0" target="_blank">He et al. (BMC, 2020)</a> noted, these narrow designs limit generalizability and underrepresented real-world populations. <a href="https://www.thelancet.com/journals/lanhl/article/PIIS2666-7568(22)00186-6/fulltext" target="_blank">Bozkurt et al. (Lancet, 2022)</a> found that out of 5.6 million U.S. adults eligible for heart failure treatment, only a small percentage qualified for trials due to restrictive eligibility requirements.
-	  	<br />
-	  	<br />
-		<b>NxtCure</b> is reimagining clinical trials to be more accessible, inclusive, and impactful—for the patients who need them and the physicians who guide their care.
+
+	NxtCure is the premier tool for clinical trials that enables patients and physicians to navigate the complex world of research and treatment innovation.
+	  <br />
+	  <br />
+	Every year, millions of patients express an interest in clinical trial participation, yet 73% report an inability to find them. At NxtCure, with innovative technology developed at MIT and University of Cambridge, we help patients find trials that match their unique medical profiles and assist physicians assess the availability, necessity, and scientific rigor of clinical trials, especially when FDA-approved treatments already exist.
+	  <br />
+	  <br />
+New legislation provides the steroids that makes NxtCure effective. In 2018, the Right to Try Act enabled patients diagnosed with life-threatening conditions who have already exhausted approved treatments to access investigational therapies. As a result, Phase 1 clinical trials on numerous promising interventions are no longer limited to healthy patients. At NxtCure we believe in the urgency of clinical trial enrollment for patients with advanced prognosis for their disease.
+	  <br />
+	  <br />
+Indeed, only approximately 40% of clinical trials are able to meet their enrollment targets on time. In fact, 11% of trials fail to enroll even a single participant. These trials are often delayed, often due to recruitment challenges that stem from strict exclusion criteria, lack of awareness among physicians and potential candidate patients, and distrust or fear, especially among underserved communities. Furthermore, administrative burdens hamper the ability of clinics and hospitals to market and disseminate information about these trials.
+	  <br />
+	  <br />
+NxtCare has been built from the ground up with all of these problems in mind.
+ The rapidly shifted medical research landscape has created confusion but also opportunity: though there is a lot of breakthrough current research, there is not enough patient recruitment. Nxtcure hopes to reduce the administrative burden, to build trust among communities, and to make an impact upon the culture of clinical trials. Furthermore, Nxtcure advocates for including patients in these breakthrough medicines that have been tested for years but have been inaccessible to patients until now. NxtCure promises to reset the clinical trial system to be more accessible, inclusive, and impactful both for the patients who need them and the physicians who guide their care.
           </p>
         </motion.div>
       </div>

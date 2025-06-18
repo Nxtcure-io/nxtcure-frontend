@@ -46,20 +46,10 @@ export default function HowItStarted() {
             className="text-gray-600 text-lg leading-relaxed"
             style={{ fontSize: "1rem" }}
           >
-            This is Gonzalo—a survivor, a fighter, and a beacon of hope.
-            Gonzalo’s journey is extraordinary. He first underwent open-heart
-            surgery, faced 2 heart attacks, then faced kidney failure, 2
-            strokes, and gangrene. Today, he’s a double amputee and is looking
-            for a clinical trial.
-            <br />
-            <br />
-            Gonzalo is the reason we started NxtCure- to help patients like him
-            find clinical trials that offer hope, healing, and a path forward.
-            Gonzalo is currently look for a treatment for his heart condition
-            and his stroke. He and patients just like him was our motivation for
-            starting NxtCure- we believe everyone should have an opportunity for
-            treatment. NxtCure is here to guide patients like him every step of
-            the way.
+	This is Gonzalo: a survivor, a fighter, and a beacon of hope. Gonzalo’s extraordinary journey through life-threatening ailments and physical limitations that brought him to the brink began when he experienced a heart attack and underwent open-heart surgery. After a clot caused a second heart attack, he then faced kidney failure and suffered two strokes. Then, gangrene of the extremities took its toll. Today, he’s a double amputee and is looking for a clinical trial.
+	  <br />
+	  <br />
+Gonzalo is one example of NxtCure’s commitment to help our patients find clinical trials for a clear path forward. Currently, Gonzalo seeks novel and breakthrough therapies for his heart condition and stroke. NxtCure’s service is rooted in the belief that everyone should have an opportunity for treatment. NxtCure is here to guide patients like him every step of the way.
           </p>
         </motion.div>
       </div>

@@ -28,23 +28,22 @@ export default function SecondPatientProfile() {
           transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
         >
           <h2 className="cormorant text-5xl font-bold text-gray-800 mb-4">
-            Meet Señora Rosa – NxtCure Patient
+            Meet Ellen
           </h2>
           <p
             className="text-gray-600 text-lg leading-relaxed"
             style={{ fontSize: "1rem" }}
           >
-		This is Señora Rosa- a former nurse, a grandmother, and the heart of her family. Years ago, as a nurse she cared for others in her small town with nothing but her hands, her heart, and a belief in healing. Today, at 92 years old, she’s searching for treatment options.
+	A former nurse, a grandmother, and the heart of her family, Ellen has cared for others in her small town for decades with nothing but her hands, her heart, and a belief in good health. Today, at 92 years old, she has run out of treatment options.
 	  <br />
 	  <br />
-Rosa is living with a severe form of heart disease that has made day-to-day life challenging. Her family searched for treatment options, but like so many others, current treatment was not responsive or effective.
+	Ellen lives with a severe form of heart disease that makes day-to-day life a burden. Her family scoured the medical establishment for treatment options, but as with so many others, current treatment was not responsive or effective.
 	  <br />
 	  <br />
-But at NxtCure, we believe stories like Rosa’s are exactly why clinical trials should exist- for those who have been told there are no more options or current options aren’t working. With our platform, we’re helping Rosa and her family explore clinical trials that may provide not just treatment, but hope.
+At NxtCure, we believe stories like Ellen’s are exactly why clinical trials should exist. For those who have been told there are no more options or current options aren’t working, our platform connects Ellen and her family to clinical trials that may provide not just treatment, but hope.
 	  <br />
 	  <br />
-Because everyone deserves a chance and no one should be left behind.
-
+To serve people like Ellen who have almost run out of hope, NxtCure commits itself to its belief that everyone deserves a chance to fight and no one should be left behind.
           </p>
         </motion.div>
       </div>
