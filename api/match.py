@@ -5,6 +5,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer, util
 import torch
 import os
+from typing import Dict, Any
 
 # Global variables to store model and data (loaded once per cold start)
 model = None
@@ -84,7 +85,58 @@ def match_trials(patient_description):
         print(f"Error in match_trials: {str(e)}")
         return {"error": f"Server error: {str(e)}"}
 
-class handler(BaseHTTPRequestHandler):
+def handler(request, context):
+    """Vercel serverless function handler"""
+    # Set CORS headers
+    headers = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+    
+    # Handle preflight requests
+    if request.method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': ''
+        }
+    
+    try:
+        # Load model and data (will only load once per cold start)
+        load_model_and_data()
+        
+        # Get request body
+        if request.method == 'POST':
+            body = request.get_json()
+            patient_description = body.get('description', '') if body else ''
+            
+            # Get matches
+            result = match_trials(patient_description)
+            
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps(result)
+            }
+        else:
+            return {
+                'statusCode': 405,
+                'headers': headers,
+                'body': json.dumps({'error': 'Method not allowed'})
+            }
+            
+    except Exception as e:
+        error_response = {"error": f"Server error: {str(e)}"}
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps(error_response)
+        }
+
+# Legacy handler for compatibility
+class LegacyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         # Set CORS headers
         self.send_response(200)
