@@ -72,9 +72,9 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use test endpoint for fast deployment
+      // Use real clinical trials data endpoint
       const apiUrl = import.meta.env.VITE_API_URL || "/api";
-      const response = await fetch(`${apiUrl}/test`, {
+      const response = await fetch(`${apiUrl}/real_match`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: textToSend }),
