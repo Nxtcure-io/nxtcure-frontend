@@ -72,9 +72,9 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use Vercel API endpoint
+      // Use test endpoint for fast deployment
       const apiUrl = import.meta.env.VITE_API_URL || "/api";
-      const response = await fetch(`${apiUrl}/match`, {
+      const response = await fetch(`${apiUrl}/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: textToSend }),
