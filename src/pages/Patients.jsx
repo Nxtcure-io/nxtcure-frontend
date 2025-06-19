@@ -72,8 +72,8 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use environment-aware API URL
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      // Use Vercel API endpoint
+      const apiUrl = import.meta.env.VITE_API_URL || "/api";
       const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,7 +101,7 @@ export default function Patient() {
 
     } catch (err) {
       console.error("API Error:", err);
-      alert("Error fetching matches. Make sure the backend is running on port 8000.");
+      alert("Error fetching matches. Please try again.");
     } finally {
       setLoading(false);
     }
