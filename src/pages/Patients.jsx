@@ -73,7 +73,7 @@ export default function Patient() {
     setLoading(true);
     try {
       // Use environment-aware API URL
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      const apiUrl = import.meta.env.VITE_API_URL || "http://35.232.79.65:8000";
       const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
