@@ -1,2 +1,1 @@
 # No dependencies needed for test endpoint 
-pandas==1.5.3 
