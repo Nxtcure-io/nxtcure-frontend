@@ -6,6 +6,6 @@ import flowbiteReact from "flowbite-react/plugin/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), flowbiteReact()],
-  // eslint-disable-next-line no-undef
-  base: process.env.VITE_BASE_PATH || "/nxtcure-frontend",
+  // Use root path for Vercel deployment
+  base: "/",
 });
