@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 
 import WaitlistBanner from "../components/WaitlistBanner";
-import WaitlistAlert from "../components/WaitlistAlert";
 import HeroSection from "../components/HeroSection";
 import FeaturesSection from "../components/StatsSection";
 import NxtCureSection from "../components/AboutSection";
@@ -41,10 +40,6 @@ export default function Home() {
       >
         <HeroSection />
       </motion.div>
-
-  <a href="https://docs.google.com/forms/d/e/1FAIpQLSfb_5tHzHN3NrhJFKpRhEhLkQIDQrXdH7jXGKK-PZrt4KBaAg/viewform?usp=sharing&ouid=105836010722188729845">
-      <WaitlistAlert />
-	  </a>
 
       <motion.div
         initial="hidden"
