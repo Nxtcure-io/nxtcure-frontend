@@ -72,9 +72,9 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use test endpoint with real data (no pandas dependency)
+      // Use simple endpoint for testing
       const apiUrl = import.meta.env.VITE_API_URL || "/api";
-      const response = await fetch(`${apiUrl}/test_real`, {
+      const response = await fetch(`${apiUrl}/simple`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: textToSend }),
