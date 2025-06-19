@@ -72,9 +72,9 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use simple endpoint for testing
+      // Use Node.js API endpoint (guaranteed to work on Vercel)
       const apiUrl = import.meta.env.VITE_API_URL || "/api";
-      const response = await fetch(`${apiUrl}/simple`, {
+      const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: textToSend }),
