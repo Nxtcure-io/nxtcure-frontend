@@ -10,18 +10,17 @@ from typing import Dict, Any
 # Global variables to store model and data (loaded once per cold start)
 model = None
 df = None
-embeddings = None
 
 def load_model_and_data():
-    global model, df, embeddings
+    global model, df
     
     if model is None:
         print("Loading SentenceTransformer model...")
         model = SentenceTransformer('all-MiniLM-L6-v2')
         
         print("Loading clinical trials data...")
-        # Get the path to the CSV file
-        csv_path = os.path.join(os.path.dirname(__file__), '..', 'backend', 'heart_disease_trials.csv')
+        # Use smaller sample dataset for faster deployment
+        csv_path = os.path.join(os.path.dirname(__file__), '..', 'backend', 'sample_trials.csv')
         df = pd.read_csv(csv_path)
         
         # Combine relevant text fields for embedding
@@ -32,10 +31,6 @@ def load_model_and_data():
             df["ExclusionCriteria"].fillna('')
         )
         
-        print("Computing embeddings for clinical trials...")
-        embeddings = model.encode(df["full_text"].tolist(), convert_to_tensor=True)
-        df["embedding"] = [emb.cpu().numpy() for emb in embeddings]
-        
         print("Backend ready!")
 
 def match_trials(patient_description):
@@ -44,25 +39,33 @@ def match_trials(patient_description):
             return {"error": "Empty description provided"}
 
         # Encode patient description
-        patient_embedding = model.encode(patient_description, convert_to_tensor=True).cpu()
+        patient_embedding = model.encode(patient_description, convert_to_tensor=True)
 
-        # Convert stored NumPy embeddings back to torch tensors for comparison
-        trial_embeddings = torch.stack([torch.tensor(emb) for emb in df["embedding"]]).cpu()
+        # Compute embeddings for trials on-demand (more efficient)
+        trial_texts = df["full_text"].tolist()
+        
+        # Process in smaller batches to avoid memory issues
+        batch_size = 50
+        all_scores = []
+        
+        for i in range(0, len(trial_texts), batch_size):
+            batch_texts = trial_texts[i:i+batch_size]
+            batch_embeddings = model.encode(batch_texts, convert_to_tensor=True)
+            
+            # Compute cosine similarity for this batch
+            batch_scores = util.pytorch_cos_sim(patient_embedding, batch_embeddings)[0]
+            all_scores.extend(batch_scores.cpu().numpy())
 
-        # Compute cosine similarity
-        cosine_scores = util.pytorch_cos_sim(patient_embedding, trial_embeddings)[0]
-
-        # Get top 5 matches
-        top_k = 5
-        top_results = torch.topk(cosine_scores, k=top_k)
+        # Convert to numpy array and get top 5 matches
+        all_scores = np.array(all_scores)
+        top_indices = np.argsort(all_scores)[::-1][:5]
 
         matches = []
-        for score, idx in zip(top_results.values, top_results.indices):
-            idx = int(idx)
+        for idx in top_indices:
             trial = df.iloc[idx]
+            similarity_score = float(all_scores[idx])
             
-            # Handle potential NaN or infinite values in similarity score
-            similarity_score = float(score.item())
+            # Handle potential NaN or infinite values
             if not (similarity_score == similarity_score):  # Check for NaN
                 similarity_score = 0.0
             elif similarity_score == float('inf') or similarity_score == float('-inf'):
