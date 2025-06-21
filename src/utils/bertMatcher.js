@@ -1,5 +1,8 @@
 import { pipeline } from '@xenova/transformers';
 
+const MODEL_ID = 'Xenova/all-MiniLM-L6-v2-quantized'; // much smaller, faster
+// If quantized model fails, fallback to 'Xenova/distilbert-base-uncased'
+
 class ClientSideBertMatcher {
     constructor() {
         this.model = null;
@@ -10,8 +13,13 @@ class ClientSideBertMatcher {
 
     async initialize(trialsData) {
         try {
-            console.log('Loading BERT model in browser...');
-            this.model = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+            console.log('Loading quantized BERT model in browser...');
+            try {
+                this.model = await pipeline('feature-extraction', MODEL_ID);
+            } catch (err) {
+                console.warn('Quantized model failed, falling back to distilbert-base-uncased', err);
+                this.model = await pipeline('feature-extraction', 'Xenova/distilbert-base-uncased');
+            }
             this.trialsData = trialsData;
             
             console.log('Computing trial embeddings...');
