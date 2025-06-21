@@ -98,9 +98,12 @@ const Results = () => {
                     >
                       View Details
                     </button>
-                    <button className="bg-green-100 text-green-700 px-6 py-2 rounded-lg hover:bg-green-200 transition flex items-center space-x-2">
+                    <button 
+                      onClick={() => handleViewDetails(trial)}
+                      className="bg-green-100 text-green-700 px-6 py-2 rounded-lg hover:bg-green-200 transition flex items-center space-x-2"
+                    >
                       <Phone size={16} />
-                      <span>Contact Details</span>
+                      <span>Show Contact Details</span>
                     </button>
                   </div>
                 </div>
@@ -188,26 +191,26 @@ const Results = () => {
                     <div className="flex items-center space-x-3">
                       <User size={20} className="text-purple-600" />
                       <div>
-                        <p className="font-medium text-gray-900">{selectedTrial.contact_name}</p>
-                        <p className="text-sm text-gray-600">{selectedTrial.contact_role}</p>
+                        <p className="font-medium text-gray-900">{selectedTrial.contact_name || 'Not provided'}</p>
+                        <p className="text-sm text-gray-600">{selectedTrial.contact_role || 'Not provided'}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-3">
                       <Phone size={20} className="text-purple-600" />
-                      <p className="text-gray-700">{selectedTrial.contact_phone}</p>
+                      <p className="text-gray-700">{selectedTrial.contact_phone || 'Not provided'}</p>
                     </div>
                     
                     <div className="flex items-center space-x-3">
                       <Mail size={20} className="text-purple-600" />
-                      <p className="text-gray-700">{selectedTrial.contact_email}</p>
+                      <p className="text-gray-700">{selectedTrial.contact_email || 'Not provided'}</p>
                     </div>
                     
                     <div className="flex items-center space-x-3">
                       <Building size={20} className="text-purple-600" />
                       <div>
-                        <p className="font-medium text-gray-900">{selectedTrial.lead_sponsor}</p>
-                        <p className="text-sm text-gray-600">{selectedTrial.sponsor_type}</p>
+                        <p className="font-medium text-gray-900">{selectedTrial.lead_sponsor || 'Not provided'}</p>
+                        <p className="text-sm text-gray-600">{selectedTrial.sponsor_type || 'Not provided'}</p>
                       </div>
                     </div>
                   </div>

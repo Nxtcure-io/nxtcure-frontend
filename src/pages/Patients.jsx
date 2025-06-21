@@ -77,7 +77,7 @@ export default function Patient() {
       const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: textToSend }),
+        body: JSON.stringify({ patientDescription: textToSend }),
       });
 
       if (!response.ok) {

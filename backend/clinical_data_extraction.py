@@ -1,63 +1,44 @@
 import requests
 import pandas as pd
 import json
-import re
+import time
+from typing import Dict, List, Optional
 
 def parse_eligibility_criteria(criteria_text):
-    """Parse eligibility criteria text to separate inclusion and exclusion criteria"""
+    """Parse inclusion and exclusion criteria from raw text"""
     if not criteria_text or criteria_text == 'N/A':
         return 'N/A', 'N/A'
     
-
-    criteria_text = str(criteria_text)
-    
-    # Initialize variables
     inclusion_criteria = 'N/A'
     exclusion_criteria = 'N/A'
     
     try:
-        inclusion_match = re.search(r'inclusion\s+criteria:?\s*(.*?)(?=exclusion\s+criteria:?|$)', 
-                                   criteria_text, re.IGNORECASE | re.DOTALL)
-        exclusion_match = re.search(r'exclusion\s+criteria:?\s*(.*?)(?=inclusion\s+criteria:?|$)', 
-                                   criteria_text, re.IGNORECASE | re.DOTALL)
+        lines = criteria_text.split('\n')
+        inclusion_lines = []
+        exclusion_lines = []
+        current_section = None
         
-        if inclusion_match:
-            inclusion_criteria = inclusion_match.group(1).strip()
-            inclusion_criteria = re.sub(r'\n\s*\n', '\n', inclusion_criteria)  # Remove extra newlines
-            inclusion_criteria = inclusion_criteria.replace('\n', ' ').strip()
-            
-        if exclusion_match:
-            exclusion_criteria = exclusion_match.group(1).strip()
-            exclusion_criteria = re.sub(r'\n\s*\n', '\n', exclusion_criteria)  # Remove extra newlines
-            exclusion_criteria = exclusion_criteria.replace('\n', ' ').strip()
-        
-        if inclusion_criteria == 'N/A' and exclusion_criteria == 'N/A':
-            lines = criteria_text.split('\n')
-            inclusion_section = False
-            exclusion_section = False
-            inclusion_lines = []
-            exclusion_lines = []
-            
-            for line in lines:
-                line = line.strip()
-                if re.match(r'inclusion\s+criteria:?', line, re.IGNORECASE):
-                    inclusion_section = True
-                    exclusion_section = False
-                    continue
-                elif re.match(r'exclusion\s+criteria:?', line, re.IGNORECASE):
-                    exclusion_section = True
-                    inclusion_section = False
-                    continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
                 
-                if inclusion_section and line:
+            if 'inclusion' in line.lower():
+                current_section = 'inclusion'
+                continue
+            elif 'exclusion' in line.lower():
+                current_section = 'exclusion'
+                continue
+            elif line.startswith('*') or line.startswith('-'):
+                if current_section == 'inclusion':
                     inclusion_lines.append(line)
-                elif exclusion_section and line:
+                elif current_section == 'exclusion':
                     exclusion_lines.append(line)
-            
-            if inclusion_lines:
-                inclusion_criteria = ' '.join(inclusion_lines)
-            if exclusion_lines:
-                exclusion_criteria = ' '.join(exclusion_lines)
+        
+        if inclusion_lines:
+            inclusion_criteria = ' '.join(inclusion_lines)
+        if exclusion_lines:
+            exclusion_criteria = ' '.join(exclusion_lines)
         
         if not inclusion_criteria or inclusion_criteria.strip() == '':
             inclusion_criteria = 'N/A'
@@ -70,6 +51,49 @@ def parse_eligibility_criteria(criteria_text):
         exclusion_criteria = 'N/A'
     
     return inclusion_criteria, exclusion_criteria
+
+def get_study_details(nct_id: str) -> Optional[Dict]:
+    """Fetch detailed information for a specific study including contact info"""
+    try:
+        url = f"https://clinicaltrials.gov/api/v2/studies/{nct_id}"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        protocol_section = data.get('protocolSection', {})
+        contacts_module = protocol_section.get('contactsLocationsModule', {})
+        
+        # Get central contacts
+        central_contacts = contacts_module.get('centralContacts', [])
+        contact_info = {
+            'ContactName': 'N/A',
+            'ContactRole': 'N/A', 
+            'ContactPhone': 'N/A',
+            'ContactEmail': 'N/A'
+        }
+        
+        if central_contacts:
+            main_contact = central_contacts[0]
+            contact_info = {
+                'ContactName': main_contact.get('name', 'N/A'),
+                'ContactRole': main_contact.get('role', 'N/A'),
+                'ContactPhone': main_contact.get('phone', 'N/A'),
+                'ContactEmail': main_contact.get('email', 'N/A')
+            }
+        
+        # Get sponsor info
+        sponsor_module = protocol_section.get('sponsorCollaboratorsModule', {})
+        lead_sponsor = sponsor_module.get('leadSponsor', {})
+        
+        return {
+            **contact_info,
+            'LeadSponsor': lead_sponsor.get('name', 'N/A'),
+            'SponsorType': lead_sponsor.get('class', 'N/A')
+        }
+        
+    except Exception as e:
+        print(f"Error fetching details for {nct_id}: {e}")
+        return None
 
 def get_clinical_trials_data():
     """Fetch clinical trials data for heart disease using ClinicalTrials.gov API v2"""
@@ -110,7 +134,7 @@ def get_clinical_trials_data():
             return None
             
         print(f"Found {len(studies)} studies")
-        print("Parsing eligibility criteria...")
+        print("Parsing eligibility criteria and fetching contact details...")
         
         processed_studies = []
         
@@ -180,7 +204,7 @@ def get_clinical_trials_data():
             countries = list(set([loc.get('country', 'N/A') for loc in locations]))
             study_info['LocationCountry'] = '; '.join(countries) if countries else 'N/A'
             
-            # Contact information
+            # Try to get contact info from search API first
             central_contacts = contacts_locations_module.get('centralContacts', [])
             if central_contacts:
                 # Get the first contact (usually the main contact)
@@ -195,11 +219,19 @@ def get_clinical_trials_data():
                 study_info['ContactPhone'] = 'N/A'
                 study_info['ContactEmail'] = 'N/A'
             
-            # Lead sponsor information
+            # Try to get sponsor info from search API first
             sponsor_collaborators_module = study.get('protocolSection', {}).get('sponsorCollaboratorsModule', {})
             lead_sponsor = sponsor_collaborators_module.get('leadSponsor', {})
             study_info['LeadSponsor'] = lead_sponsor.get('name', 'N/A')
             study_info['SponsorType'] = lead_sponsor.get('type', 'N/A')
+            
+            # If contact info is missing, fetch individual study details
+            if study_info['ContactName'] == 'N/A' and study_info['NCTId'] != 'N/A':
+                print(f"Fetching detailed contact info for {study_info['NCTId']}...")
+                details = get_study_details(study_info['NCTId'])
+                if details:
+                    study_info.update(details)
+                time.sleep(0.1)  # Rate limiting
             
             processed_studies.append(study_info)
         
@@ -248,6 +280,13 @@ def main():
         print(f"- Studies with inclusion criteria: {len(df[df['InclusionCriteria'] != 'N/A'])}")
         print(f"- Studies with exclusion criteria: {len(df[df['ExclusionCriteria'] != 'N/A'])}")
         
+        # Show contact information statistics
+        print(f"\nContact Information:")
+        print(f"- Studies with contact names: {len(df[df['ContactName'] != 'N/A'])}")
+        print(f"- Studies with contact phones: {len(df[df['ContactPhone'] != 'N/A'])}")
+        print(f"- Studies with contact emails: {len(df[df['ContactEmail'] != 'N/A'])}")
+        print(f"- Studies with sponsor info: {len(df[df['LeadSponsor'] != 'N/A'])}")
+        
         # Show status distribution
         print(f"\nStudy status distribution:")
         print(df['OverallStatus'].value_counts())
@@ -266,6 +305,7 @@ def main():
             if i < len(df):
                 print(f"\nStudy {i+1}: {df.iloc[i]['BriefTitle'][:70]}...")
                 print(f"NCT ID: {df.iloc[i]['NCTId']}")
+                print(f"Contact: {df.iloc[i]['ContactName']} - {df.iloc[i]['ContactEmail']}")
                 print(f"INCLUSION: {df.iloc[i]['InclusionCriteria'][:200]}{'...' if len(str(df.iloc[i]['InclusionCriteria'])) > 200 else ''}")
                 print(f"EXCLUSION: {df.iloc[i]['ExclusionCriteria'][:200]}{'...' if len(str(df.iloc[i]['ExclusionCriteria'])) > 200 else ''}")
                 print("-" * 80)
