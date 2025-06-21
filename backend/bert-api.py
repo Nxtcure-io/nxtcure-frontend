@@ -25,7 +25,7 @@ def get_bert_embedding(text):
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Frontend running on port 5173
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://10.0.0.112:5173"],  # Frontend running on port 5173
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,8 +59,6 @@ def match_trials(request: PatientRequest):
         similarities = cosine_similarity(patient_embedding, trial_embeddings)[0]
         top_k = 5
         top_results = similarities.argsort()[::-1][:top_k]
-        print(top_results)
-    
         '''
         st.subheader(f"🔎 Top {top_k} Clinical Trial Matches:")
         for rank, idx in enumerate(top_indices, start=1):
@@ -86,18 +84,18 @@ def match_trials(request: PatientRequest):
         # Get top 5 matches
         ###top_k = 5
         ###top_results = torch.topk(cosine_scores, k=top_k)
-        '''
         matches = []
-        for score, idx in zip(top_results.values, top_results.indices):
-            idx = int(idx)
+        #for score, idx in zip(top_results.values, top_results.indices):
+        for score, idx in enumerate(top_indices, start=1):
             trial = df.iloc[idx]
             
             # Handle potential NaN or infinite values in similarity score
-            ### similarity_score = float(score.item())
-            ###if not (similarity_score == similarity_score):  # Check for NaN
-               ### similarity_score = 0.0
-            ### elif similarity_score == float('inf') or similarity_score == float('-inf'):
-                ### similarity_score = 1.0 if similarity_score > 0 else 0.0
+            #similarity_score = float(score.item())
+            similarity_score = float(score)
+            if not (similarity_score == similarity_score):  # Check for NaN
+               similarity_score = 0.0
+            elif similarity_score == float('inf') or similarity_score == float('-inf'):
+                similarity_score = 1.0 if similarity_score > 0 else 0.0
             
             matches.append({
                 "nct_id": str(trial["NCTId"]) if pd.notna(trial["NCTId"]) else "",
@@ -110,9 +108,7 @@ def match_trials(request: PatientRequest):
                 "country": str(trial["LocationCountry"]) if pd.notna(trial["LocationCountry"]) else ""
             })
 
-        '''
-        #return {"matches": matches}
-        return {"matches": "Not Implemented"}
+        return {"matches": matches}
     
     except Exception as e:
         print(f"Error in match_trials: {str(e)}")

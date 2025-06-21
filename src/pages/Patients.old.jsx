@@ -72,7 +72,9 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use environment-aware API URL
+      // revert back to localhost for testing
+	    // will integrate python in some way 
+	    // worth iterating for
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
@@ -101,7 +103,7 @@ export default function Patient() {
 
     } catch (err) {
       console.error("API Error:", err);
-      alert("Error fetching matches. Make sure the backend is running on port 8000.");
+      alert("Error fetching matches. Please try again.");
     } finally {
       setLoading(false);
     }
