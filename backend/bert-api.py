@@ -86,7 +86,7 @@ def match_trials(request: PatientRequest):
         ###top_results = torch.topk(cosine_scores, k=top_k)
         matches = []
         #for score, idx in zip(top_results.values, top_results.indices):
-        for score, idx in enumerate(top_indices, start=1):
+        for score, idx in enumerate(top_results, start=1):
             trial = df.iloc[idx]
             
             # Handle potential NaN or infinite values in similarity score
