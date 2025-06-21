@@ -10,14 +10,31 @@ export default function Patient() {
   const [historyText, setHistoryText] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Manual input states
   const [manualData, setManualData] = useState({
+    age: "",
+    gender: "",
     condition: "",
     medications: "",
-    allergies: ""
+    familyConditions: "",
+    diagnosisDate: "",
+    diseaseStatus: "",
+    priorTreatments: [],
+    testProcedure: "",
+    testResult: "",
+    city: "",
+    state: "",
+    travelDistance: "",
+    drugAllergies: "",
+    ethnicity: "",
+    height: "",
+    weight: "",
+    comorbidities: [],
+    otherComorbidities: ""
   });
 
-  // Checkbox states
+  const [otherPriorTreatment, setOtherPriorTreatment] = useState("");
+  const [otherComorbidity, setOtherComorbidity] = useState("");
+
   const [checkboxes, setCheckboxes] = useState({
     terms: false,
     deidentify: false
@@ -34,6 +51,24 @@ export default function Patient() {
     }));
   };
 
+  const handlePriorTreatmentChange = (treatment) => {
+    setManualData(prev => ({
+      ...prev,
+      priorTreatments: prev.priorTreatments.includes(treatment)
+        ? prev.priorTreatments.filter(t => t !== treatment)
+        : [...prev.priorTreatments, treatment]
+    }));
+  };
+
+  const handleComorbidityChange = (comorbidity) => {
+    setManualData(prev => ({
+      ...prev,
+      comorbidities: prev.comorbidities.includes(comorbidity)
+        ? prev.comorbidities.filter(c => c !== comorbidity)
+        : [...prev.comorbidities, comorbidity]
+    }));
+  };
+
   const handleCheckboxChange = (field, checked) => {
     setCheckboxes(prev => ({
       ...prev,
@@ -42,7 +77,6 @@ export default function Patient() {
   };
 
   const validateForm = () => {
-    // Check if both checkboxes are checked (only for history and manual methods)
     if ((method === "history" || method === "manual") && (!checkboxes.terms || !checkboxes.deidentify)) {
       alert("Please accept the Terms and Conditions and enable De-Identify Data to continue.");
       return false;
@@ -61,7 +95,15 @@ export default function Patient() {
       if (method === "history") {
         textToSend = historyText;
       } else if (method === "manual") {
-        textToSend = `Medical Condition: ${manualData.condition}. Medications: ${manualData.medications}. Allergies: ${manualData.allergies}`;
+        const priorTreatmentsText = manualData.priorTreatments.length > 0 
+          ? manualData.priorTreatments.join(", ") + (otherPriorTreatment ? `, ${otherPriorTreatment}` : "")
+          : "none";
+        
+        const comorbiditiesText = manualData.comorbidities.length > 0
+          ? manualData.comorbidities.join(", ") + (otherComorbidity ? `, ${otherComorbidity}` : "")
+          : "none";
+
+        textToSend = `I am ${manualData.age} years old and I am ${manualData.gender}. I am looking for a clinical trial for ${manualData.condition}. I currently take ${manualData.medications || "no medications"}. I have a family history of ${manualData.familyConditions || "no family history"}. I was diagnosed in ${manualData.diagnosisDate} and am currently in ${manualData.diseaseStatus} status. I previously received ${priorTreatmentsText}. I had ${manualData.testProcedure || "no specific tests"} which showed ${manualData.testResult || "no specific results"}. I live in ${manualData.city}, ${manualData.state} and am willing to travel up to ${manualData.travelDistance}. I have ${manualData.drugAllergies || "no known drug allergies"}. My ethnicity is ${manualData.ethnicity}. My height is ${manualData.height} and my weight is ${manualData.weight} lbs. I have ${comorbiditiesText} as comorbidities.`;
       }
     }
 
@@ -72,7 +114,6 @@ export default function Patient() {
 
     setLoading(true);
     try {
-      // Use Node.js API endpoint (guaranteed to work on Vercel)
       const apiUrl = import.meta.env.VITE_API_URL || "/api";
       const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
@@ -91,7 +132,6 @@ export default function Patient() {
         return;
       }
       
-      // Navigate to results page with the data
       navigate('/results', { 
         state: { 
           results: data.matches || [],
@@ -129,28 +169,272 @@ export default function Patient() {
         );
       case "manual":
         return (
-          <div className="mt-6 space-y-4">
-            <input
-              type="text"
-              placeholder="Medical Condition (e.g., Heart Disease, Diabetes)"
-              value={manualData.condition}
-              onChange={(e) => handleManualDataChange("condition", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="Current Medications (e.g., Metformin, Lisinopril)"
-              value={manualData.medications}
-              onChange={(e) => handleManualDataChange("medications", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-            <input
-              type="text"
-              placeholder="Known Allergies (e.g., Penicillin, None)"
-              value={manualData.allergies}
-              onChange={(e) => handleManualDataChange("allergies", e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
+          <div className="mt-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+                <input
+                  type="number"
+                  placeholder="Enter age"
+                  value={manualData.age}
+                  onChange={(e) => handleManualDataChange("age", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                <select
+                  value={manualData.gender}
+                  onChange={(e) => handleManualDataChange("gender", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+              <input
+                type="text"
+                placeholder="e.g., Heart Disease, Diabetes, Cancer"
+                value={manualData.condition}
+                onChange={(e) => handleManualDataChange("condition", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Current Medications</label>
+              <input
+                type="text"
+                placeholder="e.g., Metformin, Lisinopril, Aspirin"
+                value={manualData.medications}
+                onChange={(e) => handleManualDataChange("medications", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Family History</label>
+              <input
+                type="text"
+                placeholder="e.g., Heart disease, Diabetes, Cancer"
+                value={manualData.familyConditions}
+                onChange={(e) => handleManualDataChange("familyConditions", e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Diagnosis Date</label>
+                <input
+                  type="month"
+                  value={manualData.diagnosisDate}
+                  onChange={(e) => handleManualDataChange("diagnosisDate", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Disease Status</label>
+                <select
+                  value={manualData.diseaseStatus}
+                  onChange={(e) => handleManualDataChange("diseaseStatus", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select status</option>
+                  <option value="remission">Remission</option>
+                  <option value="relapsed">Relapsed</option>
+                  <option value="refractory">Refractory</option>
+                  <option value="stable">Stable</option>
+                  <option value="progressing">Progressing</option>
+                  <option value="newly diagnosed">Newly Diagnosed</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Prior Treatments</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {['surgery', 'chemotherapy', 'radiation therapy', 'immunotherapy', 'targeted therapy', 'stem cell transplant'].map(treatment => (
+                  <label key={treatment} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={manualData.priorTreatments.includes(treatment)}
+                      onChange={() => handlePriorTreatmentChange(treatment)}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">{treatment}</span>
+                  </label>
+                ))}
+              </div>
+              <input
+                type="text"
+                placeholder="Other treatments"
+                value={otherPriorTreatment}
+                onChange={(e) => setOtherPriorTreatment(e.target.value)}
+                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Test/Procedure</label>
+                <input
+                  type="text"
+                  placeholder="e.g., MRI, Biopsy, Blood test"
+                  value={manualData.testProcedure}
+                  onChange={(e) => handleManualDataChange("testProcedure", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Test Result</label>
+                <input
+                  type="text"
+                  placeholder="e.g., MRD-positive, FLT3 mutation"
+                  value={manualData.testResult}
+                  onChange={(e) => handleManualDataChange("testResult", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <input
+                  type="text"
+                  placeholder="Enter city"
+                  value={manualData.city}
+                  onChange={(e) => handleManualDataChange("city", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                <input
+                  type="text"
+                  placeholder="Enter state"
+                  value={manualData.state}
+                  onChange={(e) => handleManualDataChange("state", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Travel Distance</label>
+                <select
+                  value={manualData.travelDistance}
+                  onChange={(e) => handleManualDataChange("travelDistance", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select distance</option>
+                  <option value="25 mi">25 mi</option>
+                  <option value="50 mi">50 mi</option>
+                  <option value="100 mi">100 mi</option>
+                  <option value="250 mi">250 mi</option>
+                  <option value="nationwide">Nationwide</option>
+                  <option value="specify region">Specify region</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Drug Allergies</label>
+                <select
+                  value={manualData.drugAllergies}
+                  onChange={(e) => handleManualDataChange("drugAllergies", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select option</option>
+                  <option value="no known drug allergies">No known drug allergies</option>
+                  <option value="specify allergies">Specify allergies</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Race/Ethnicity</label>
+                <select
+                  value={manualData.ethnicity}
+                  onChange={(e) => handleManualDataChange("ethnicity", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select ethnicity</option>
+                  <option value="White">White</option>
+                  <option value="Black or African American">Black or African American</option>
+                  <option value="Asian">Asian</option>
+                  <option value="Hispanic or Latino">Hispanic or Latino</option>
+                  <option value="Native American">Native American</option>
+                  <option value="Pacific Islander">Pacific Islander</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Height</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 5'8&quot;"
+                  value={manualData.height}
+                  onChange={(e) => handleManualDataChange("height", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Weight (lbs)</label>
+                <input
+                  type="number"
+                  placeholder="Enter weight in pounds"
+                  value={manualData.weight}
+                  onChange={(e) => handleManualDataChange("weight", e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Comorbidities</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {['diabetes', 'hypertension', 'chronic kidney disease', 'asthma', 'obesity', 'COPD'].map(comorbidity => (
+                  <label key={comorbidity} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={manualData.comorbidities.includes(comorbidity)}
+                      onChange={() => handleComorbidityChange(comorbidity)}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">{comorbidity}</span>
+                  </label>
+                ))}
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={manualData.comorbidities.includes('no major comorbidities')}
+                    onChange={() => handleComorbidityChange('no major comorbidities')}
+                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-gray-700">No major comorbidities</span>
+                </label>
+              </div>
+              <input
+                type="text"
+                placeholder="Other comorbidities"
+                value={otherComorbidity}
+                onChange={(e) => setOtherComorbidity(e.target.value)}
+                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
             <button
               onClick={() => handleFindTrials()}
               className="bg-gradient-to-r from-[#5F5AE8] to-[#BB5AE7] text-white px-6 py-3 rounded-lg w-full transition hover:opacity-90"
@@ -203,104 +487,137 @@ export default function Patient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f7f8] px-4 py-10 flex flex-col items-center">
-      {/* Progress Bar */}
-      <div className="w-full max-w-5xl mb-10">
-        <div className="flex items-center">
-          <div className="w-7 h-7 rounded-full bg-[#5F5AE8]"></div>
-          <div className="flex-1 h-2 bg-gradient-to-r from-[#5F5AE8] to-[#BB5AE7]"></div>
-          <div className="w-7 h-7 rounded-full bg-gray-300"></div>
-          <div className="flex-1 h-2 bg-gray-300"></div>
-          <div className="w-7 h-7 rounded-full bg-gray-300"></div>
-        </div>
-        <div className="flex justify-between text-sm text-gray-500 mt-2">
-          <span className="text-black font-semibold">Upload EHR</span>
-          <span>View Trials</span>
-          <span>Connect with Trials</span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-6 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Patient Information</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Choose how you'd like to provide your medical information. We'll use this to find 
+            the most relevant clinical trials for your condition.
+          </p>
+        </motion.div>
 
-      {/* Upload Box */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-3xl bg-white rounded-2xl p-10 shadow-xl"
-      >
-        <h2 className="text-2xl font-bold mb-2">Upload Your Health Records</h2>
-        <p className="text-sm text-gray-500 mb-6">Secure and HIPAA-Compliant</p>
-
-        {/* Method Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-          {["history", "manual", "upload", "mychart"].map((m) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-xl p-8 shadow-sm border border-gray-200"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <button
-              key={m}
-              onClick={() => setMethod(m)}
-              className={`py-2 px-4 rounded-lg border transition-all ${
-                method === m
-                  ? "bg-gradient-to-r from-[#5F5AE8] to-[#BB5AE7] text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              onClick={() => setMethod("upload")}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                method === "upload"
+                  ? "border-purple-500 bg-purple-50 text-purple-700"
+                  : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              {{
-                history: "Enter Patient History",
-                manual: "Manually Enter",
-                upload: "Upload EHR",
-                mychart: "Login via MyChart",
-              }[m]}
-            </button>
-          ))}
-        </div>
-
-        {renderUploadMethod()}
-
-        {/* Checkboxes - Only show for history and manual methods */}
-        {(method === "history" || method === "manual") && (
-          <>
-            <div className="flex items-start space-x-2 mt-6">
-              <input 
-                type="checkbox" 
-                id="terms" 
-                className="mt-1" 
-                checked={checkboxes.terms}
-                onChange={(e) => handleCheckboxChange("terms", e.target.checked)}
-              />
-              <label htmlFor="terms" className="text-sm text-gray-700">
-                I agree with <span className="font-semibold text-purple-600">Terms and Conditions</span>
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-            </div>
-            <div className="flex items-start space-x-2 mt-2 mb-6">
-              <input 
-                type="checkbox" 
-                id="deidentify" 
-                className="mt-1" 
-                checked={checkboxes.deidentify}
-                onChange={(e) => handleCheckboxChange("deidentify", e.target.checked)}
-              />
-              <label htmlFor="deidentify" className="text-sm text-gray-700">
-                De-Identify my Data
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-            </div>
-            
-            {/* Validation Message */}
-            {(!checkboxes.terms || !checkboxes.deidentify) && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  <span className="font-medium">Required:</span> Please check both boxes above to proceed with finding trials.
-                </p>
+              <div className="text-center">
+                <UploadCloud size={32} className="mx-auto mb-2" />
+                <h3 className="font-semibold">Upload Records</h3>
+                <p className="text-sm text-gray-600">Upload your medical files</p>
               </div>
-            )}
-          </>
-        )}
-      </motion.div>
+            </button>
 
-      {/* Footer */}
-      <div className="mt-12 text-sm text-gray-500 flex space-x-4">
-        <a href="#" className="hover:underline">Privacy</a>
-        <a href="#" className="hover:underline">Support</a>
-        <a href="#" className="hover:underline">FAQs</a>
+            <button
+              onClick={() => setMethod("history")}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                method === "history"
+                  ? "border-purple-500 bg-purple-50 text-purple-700"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="text-center">
+                <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-purple-600 font-semibold">H</span>
+                </div>
+                <h3 className="font-semibold">Medical History</h3>
+                <p className="text-sm text-gray-600">Enter your medical history</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setMethod("manual")}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                method === "manual"
+                  ? "border-purple-500 bg-purple-50 text-purple-700"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="text-center">
+                <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-purple-600 font-semibold">F</span>
+                </div>
+                <h3 className="font-semibold">Form Entry</h3>
+                <p className="text-sm text-gray-600">Fill out detailed form</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setMethod("mychart")}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                method === "mychart"
+                  ? "border-purple-500 bg-purple-50 text-purple-700"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <div className="text-center">
+                <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-purple-600 font-semibold">M</span>
+                </div>
+                <h3 className="font-semibold">MyChart</h3>
+                <p className="text-sm text-gray-600">Connect your MyChart</p>
+              </div>
+            </button>
+          </div>
+
+          {renderUploadMethod()}
+
+          {(method === "history" || method === "manual") && (
+            <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={checkboxes.terms}
+                    onChange={(e) => handleCheckboxChange("terms", e.target.checked)}
+                    className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      I accept the Terms and Conditions
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      By checking this box, you agree to our terms of service and privacy policy.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={checkboxes.deidentify}
+                    onChange={(e) => handleCheckboxChange("deidentify", e.target.checked)}
+                    className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Enable De-Identify Data
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Remove personally identifiable information from your data for enhanced privacy.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );

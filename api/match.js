@@ -1,9 +1,7 @@
-import axios from 'axios';
 import fs from 'fs';
 import csv from 'csv-parser';
 import path from 'path';
 
-const BERT_API_URL = 'http://localhost:8001';
 const FALLBACK_KEYWORDS = [
     'heart', 'cardiac', 'cardiovascular', 'failure', 'disease', 'attack',
     'arrhythmia', 'fibrillation', 'coronary', 'artery', 'valve', 'chamber',
@@ -65,33 +63,68 @@ function simpleKeywordMatch(patientDescription, trialsData) {
         .slice(0, 5);
 }
 
-async function getBertMatches(patientDescription, topK = 5, similarityThreshold = 0.3) {
-    try {
-        const response = await axios.post(`${BERT_API_URL}/match`, {
-            description: patientDescription,
-            top_k: topK,
-            similarity_threshold: similarityThreshold
-        }, {
-            timeout: 10000
-        });
+function enhancedKeywordMatch(patientDescription, trialsData) {
+    const patientWords = patientDescription.toLowerCase().split(/\s+/);
+    const matches = [];
+    
+    for (const trial of trialsData) {
+        const trialText = [
+            trial.Condition || '',
+            trial.BriefTitle || '',
+            trial.BriefSummary || '',
+            trial.InclusionCriteria || '',
+            trial.ExclusionCriteria || ''
+        ].join(' ').toLowerCase();
         
-        return response.data.matches;
-    } catch (error) {
-        console.error('BERT API error:', error.message);
-        return null;
+        const trialWords = trialText.split(/\s+/);
+        
+        let score = 0;
+        let exactMatches = 0;
+        let partialMatches = 0;
+        
+        for (const patientWord of patientWords) {
+            if (patientWord.length < 3) continue;
+            
+            for (const trialWord of trialWords) {
+                if (trialWord.length < 3) continue;
+                
+                if (patientWord === trialWord) {
+                    exactMatches++;
+                    score += 2;
+                } else if (trialWord.includes(patientWord) || patientWord.includes(trialWord)) {
+                    partialMatches++;
+                    score += 1;
+                }
+            }
+        }
+        
+        if (score > 0) {
+            const normalizedScore = score / (patientWords.length * 2);
+            matches.push({
+                nct_id: trial.NCTId || null,
+                title: trial.BriefTitle || null,
+                condition: trial.Condition || null,
+                summary: trial.BriefSummary || null,
+                inclusion: trial.InclusionCriteria || null,
+                exclusion: trial.ExclusionCriteria || null,
+                country: trial.LocationCountry || null,
+                status: trial.OverallStatus || null,
+                phase: trial.Phase || null,
+                enrollment: trial.EnrollmentCount || null,
+                contact_name: trial.ContactName || null,
+                contact_role: trial.ContactRole || null,
+                contact_phone: trial.ContactPhone || null,
+                contact_email: trial.ContactEmail || null,
+                lead_sponsor: trial.LeadSponsor || null,
+                sponsor_type: trial.SponsorType || null,
+                similarity: Math.min(normalizedScore, 1)
+            });
+        }
     }
-}
-
-async function getTrialDetails(nctId) {
-    try {
-        const response = await axios.get(`${BERT_API_URL}/trial/${nctId}`, {
-            timeout: 5000
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error getting trial details:', error.message);
-        return null;
-    }
+    
+    return matches
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 5);
 }
 
 export default async function handler(req, res) {
@@ -131,18 +164,12 @@ export default async function handler(req, res) {
                 .on('error', reject);
         });
         
-        let matches = await getBertMatches(patientDescription, topK, similarityThreshold);
+        const matches = enhancedKeywordMatch(patientDescription, trialsData);
         
-        if (!matches) {
-            console.log('Falling back to keyword matching...');
-            matches = simpleKeywordMatch(patientDescription, trialsData);
-        }
-        
-        // Remove forced keyword matching, use only BERT results if available
         const response = {
             matches: matches,
             total_found: matches.length,
-            method: matches && matches.length > 0 && matches[0].hasOwnProperty('similarity') ? 'bert' : 'keyword'
+            method: 'enhanced_keyword'
         };
         
         res.status(200).json(response);
