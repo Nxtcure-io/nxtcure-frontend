@@ -1,3 +1,48 @@
+import fs from 'fs';
+import path from 'path';
+
+// Helper function to parse CSV with proper handling of quoted fields
+function parseCSV(csvText) {
+  const lines = csvText.split('\n');
+  const headers = parseCSVLine(lines[0]);
+  const data = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') continue;
+    const values = parseCSVLine(lines[i]);
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header.trim()] = values[index] || '';
+    });
+    data.push(row);
+  }
+  
+  return data;
+}
+
+// Parse a single CSV line, handling quoted fields
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current.trim());
+  return result;
+}
+
 export default function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,78 +64,51 @@ export default function handler(req, res) {
         return res.status(400).json({ error: "Empty description provided" });
       }
 
-      // Real clinical trials data (from your heart_disease_trials.csv)
-      const realTrials = [
-        {
-          "nct_id": "NCT05279066",
-          "title": "Validation of Ejection Fraction and Cardiac Output Using Biostrap Wristband",
-          "similarity": 0.85,
-          "condition": "Heart Disease",
-          "summary": "This study evaluates the accuracy of Biostrap wristband in measuring ejection fraction and cardiac output compared to standard cardiac ultrasound.",
-          "inclusion": "≥ 18 years of age. Subjects who are undergoing elective cardiac ultrasound as an outpatient for group 1 or are scheduled for/completed a pulmonary arterial catheterization for group 2.",
-          "exclusion": "Subject is unable or unwilling to wear the wristband for the required duration.",
-          "country": "United States",
-          "status": "RECRUITING",
-          "phase": "N/A",
-          "enrollment": "100"
-        },
-        {
-          "nct_id": "NCT05371366",
-          "title": "The Puncturable Atrial Septal Defect Occluder Trial (the PASSER Trial)",
-          "similarity": 0.72,
-          "condition": "Atrial Septal Defect",
-          "summary": "A clinical trial to evaluate the safety and efficacy of puncturable atrial septal defect occluder in patients with secundum atrial septal defect.",
-          "inclusion": "aged 18-70 years; with congenital secundum atrial septal defect; the maximal ASD diameter was ≤38 mm; with atrial-level left-to-right shunt.",
-          "exclusion": "ostium primordium ASD and sinus venosus ASD. infective endocarditis and hemorrhagic disorders. active thrombosis.",
-          "country": "China",
-          "status": "RECRUITING",
-          "phase": "N/A",
-          "enrollment": "120"
-        },
-        {
-          "nct_id": "NCT05789966",
-          "title": "Fullscale_Intervention Study: Genetic Risk Communication for Heart Disease",
-          "similarity": 0.68,
-          "condition": "Cardiovascular Disease",
-          "summary": "This study investigates the impact of genetic risk communication on heart disease prevention behaviors.",
-          "inclusion": "Adults aged 18-65 with family history of heart disease. No prior genetic testing for cardiovascular conditions.",
-          "exclusion": "Previous genetic testing for cardiovascular conditions. Unable to provide informed consent.",
-          "country": "United States",
-          "status": "NOT_YET_RECRUITING",
-          "phase": "N/A",
-          "enrollment": "500"
-        },
-        {
-          "nct_id": "NCT05523466",
-          "title": "Effect of Acupuncture on Heart Rate Variability in Patients with Heart Disease",
-          "similarity": 0.65,
-          "condition": "Heart Disease",
-          "summary": "Study to evaluate the effects of acupuncture on heart rate variability in patients with cardiovascular conditions.",
-          "inclusion": "Adults with diagnosed heart disease. Stable cardiovascular condition. No recent cardiac events.",
-          "exclusion": "Unstable angina. Recent myocardial infarction. Severe arrhythmias.",
-          "country": "United States",
-          "status": "RECRUITING",
-          "phase": "Phase 2",
-          "enrollment": "80"
-        },
-        {
-          "nct_id": "NCT00882466",
-          "title": "The Effect of Erythropoietin at the Time of Reperfusion in Acute Myocardial Infarction",
-          "similarity": 0.62,
-          "condition": "Acute Myocardial Infarction",
-          "summary": "Randomized trial to evaluate the cardioprotective effects of erythropoietin during reperfusion therapy for acute myocardial infarction.",
-          "inclusion": "Patients with acute ST-elevation myocardial infarction. Undergoing primary percutaneous coronary intervention.",
-          "exclusion": "Severe anemia. History of thromboembolic events. Uncontrolled hypertension.",
-          "country": "Korea, Republic of",
-          "status": "COMPLETED",
-          "phase": "Phase 3",
-          "enrollment": "200"
-        }
-      ];
+      // Read the CSV file
+      const csvPath = path.join(process.cwd(), 'heart_disease_trials.csv');
+      
+      if (!fs.existsSync(csvPath)) {
+        console.error('CSV file not found:', csvPath);
+        return res.status(500).json({ error: "Clinical trials data not available" });
+      }
+
+      const csvData = fs.readFileSync(csvPath, 'utf-8');
+      const csvRows = parseCSV(csvData);
+      
+      console.log('CSV headers:', Object.keys(csvRows[0] || {}));
+      console.log('First row contact data:', {
+        ContactName: csvRows[0]?.ContactName,
+        ContactPhone: csvRows[0]?.ContactPhone,
+        ContactEmail: csvRows[0]?.ContactEmail
+      });
+      
+      // Convert CSV data to our format
+      const trials = csvRows
+        .filter(row => row.NCTId && row.BriefTitle) // Only include trials with valid data
+        .map(row => ({
+          nct_id: row.NCTId,
+          title: row.BriefTitle,
+          condition: row.Condition || 'N/A',
+          summary: row.BriefSummary || 'N/A',
+          inclusion: row.InclusionCriteria || 'N/A',
+          exclusion: row.ExclusionCriteria || 'N/A',
+          country: row.LocationCountry || 'N/A',
+          status: row.OverallStatus || 'N/A',
+          phase: row.Phase || 'N/A',
+          enrollment: row.EnrollmentCount || 'N/A',
+          contact_name: row.ContactName || 'N/A',
+          contact_role: row.ContactRole || 'N/A',
+          contact_phone: row.ContactPhone || 'N/A',
+          contact_email: row.ContactEmail || 'N/A',
+          lead_sponsor: row.LeadSponsor || 'N/A',
+          sponsor_type: row.SponsorType || 'N/A'
+        }));
+
+      console.log(`Loaded ${trials.length} trials from CSV`);
 
       // Simple keyword matching
       const patientWords = description.toLowerCase().split(/\s+/);
-      const scoredTrials = realTrials.map(trial => {
+      const scoredTrials = trials.map(trial => {
         const trialText = `${trial.condition} ${trial.summary} ${trial.inclusion} ${trial.exclusion}`.toLowerCase();
         const trialWords = trialText.split(/\s+/);
         

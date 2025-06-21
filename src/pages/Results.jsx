@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bookmark, MessageCircle } from "lucide-react";
+import { Bookmark, MessageCircle, X, Phone, Mail, User, Building } from "lucide-react";
 
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [results, setResults] = useState([]);
   const [patientData, setPatientData] = useState("");
+  const [selectedTrial, setSelectedTrial] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (location.state && location.state.results) {
@@ -18,14 +20,20 @@ const Results = () => {
     }
   }, [location.state, navigate]);
 
-  const getSuccessRate = (similarity) => {
-    return Math.round(similarity * 100);
+  const handleViewDetails = (trial) => {
+    setSelectedTrial(trial);
+    setShowModal(true);
   };
 
-      return (
-      <div className="min-h-screen bg-gray-50">
-                {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-6 py-16">
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedTrial(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -75,14 +83,26 @@ const Results = () => {
                     <p>
                       <span className="font-medium">Location:</span> {trial.country}
                     </p>
-                    <p className="text-purple-600 font-medium">
-                      Success Rate: {getSuccessRate(trial.similarity)}%
+                    <p>
+                      <span className="font-medium">Status:</span> {trial.status}
+                    </p>
+                    <p>
+                      <span className="font-medium">Enrollment:</span> {trial.enrollment} participants
                     </p>
                   </div>
 
-                  <button className="mt-6 bg-purple-100 text-purple-700 px-6 py-2 rounded-lg hover:bg-purple-200 transition">
-                    View Details
-                  </button>
+                  <div className="mt-6 flex space-x-4">
+                    <button 
+                      onClick={() => handleViewDetails(trial)}
+                      className="bg-purple-100 text-purple-700 px-6 py-2 rounded-lg hover:bg-purple-200 transition"
+                    >
+                      View Details
+                    </button>
+                    <button className="bg-green-100 text-green-700 px-6 py-2 rounded-lg hover:bg-green-200 transition flex items-center space-x-2">
+                      <Phone size={16} />
+                      <span>Contact Details</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Bookmark Icon */}
@@ -107,6 +127,108 @@ const Results = () => {
           </div>
         )}
       </div>
+
+      {/* Contact Details Modal */}
+      {showModal && selectedTrial && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Clinical Trial Details</h2>
+                <button
+                  onClick={closeModal}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Trial Information</h3>
+                  <div className="space-y-2 text-gray-700">
+                    <p><span className="font-medium">NCT ID:</span> {selectedTrial.nct_id}</p>
+                    <p><span className="font-medium">Title:</span> {selectedTrial.title}</p>
+                    <p><span className="font-medium">Condition:</span> {selectedTrial.condition}</p>
+                    <p><span className="font-medium">Status:</span> {selectedTrial.status}</p>
+                    <p><span className="font-medium">Phase:</span> {selectedTrial.phase}</p>
+                    <p><span className="font-medium">Enrollment:</span> {selectedTrial.enrollment} participants</p>
+                    <p><span className="font-medium">Location:</span> {selectedTrial.country}</p>
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Study Summary</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedTrial.summary}</p>
+                </div>
+
+                {/* Inclusion Criteria */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Inclusion Criteria</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedTrial.inclusion}</p>
+                </div>
+
+                {/* Exclusion Criteria */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Exclusion Criteria</h3>
+                  <p className="text-gray-700 leading-relaxed">{selectedTrial.exclusion}</p>
+                </div>
+
+                {/* Contact Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <User size={20} className="text-purple-600" />
+                      <div>
+                        <p className="font-medium text-gray-900">{selectedTrial.contact_name}</p>
+                        <p className="text-sm text-gray-600">{selectedTrial.contact_role}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <Phone size={20} className="text-purple-600" />
+                      <p className="text-gray-700">{selectedTrial.contact_phone}</p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <Mail size={20} className="text-purple-600" />
+                      <p className="text-gray-700">{selectedTrial.contact_email}</p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <Building size={20} className="text-purple-600" />
+                      <div>
+                        <p className="font-medium text-gray-900">{selectedTrial.lead_sponsor}</p>
+                        <p className="text-sm text-gray-600">{selectedTrial.sponsor_type}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end space-x-4">
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition"
+                >
+                  Close
+                </button>
+                <button className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                  Apply for Trial
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Chat Bubble */}
       <div className="fixed bottom-6 right-6">

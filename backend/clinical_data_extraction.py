@@ -180,6 +180,27 @@ def get_clinical_trials_data():
             countries = list(set([loc.get('country', 'N/A') for loc in locations]))
             study_info['LocationCountry'] = '; '.join(countries) if countries else 'N/A'
             
+            # Contact information
+            central_contacts = contacts_locations_module.get('centralContacts', [])
+            if central_contacts:
+                # Get the first contact (usually the main contact)
+                main_contact = central_contacts[0]
+                study_info['ContactName'] = main_contact.get('name', 'N/A')
+                study_info['ContactRole'] = main_contact.get('role', 'N/A')
+                study_info['ContactPhone'] = main_contact.get('phone', 'N/A')
+                study_info['ContactEmail'] = main_contact.get('email', 'N/A')
+            else:
+                study_info['ContactName'] = 'N/A'
+                study_info['ContactRole'] = 'N/A'
+                study_info['ContactPhone'] = 'N/A'
+                study_info['ContactEmail'] = 'N/A'
+            
+            # Lead sponsor information
+            sponsor_collaborators_module = study.get('protocolSection', {}).get('sponsorCollaboratorsModule', {})
+            lead_sponsor = sponsor_collaborators_module.get('leadSponsor', {})
+            study_info['LeadSponsor'] = lead_sponsor.get('name', 'N/A')
+            study_info['SponsorType'] = lead_sponsor.get('type', 'N/A')
+            
             processed_studies.append(study_info)
         
         # Convert to DataFrame
