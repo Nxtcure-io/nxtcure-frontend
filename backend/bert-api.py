@@ -6,6 +6,7 @@ import torch
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
+import pickle
 
 def load_bert_model():
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -31,7 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-'''
 df = pd.read_csv("heart_disease_trials.csv")
 df["full_text"] = (
     df["Condition"].fillna('') + " " +
@@ -39,13 +39,14 @@ df["full_text"] = (
     df["InclusionCriteria"].fillna('') + " " +
     df["ExclusionCriteria"].fillna('')
 )
+'''
 df["embedding"] = df["full_text"].apply(get_bert_embedding)
 '''
 
 try:
     with open("trail_embeddings.pickle", 'rb') as pickle_in:
         trial_embeddings = pickle.load(pickle_in)
-        print(f"Data successfully unpickled from {filename}:")
+        print(f"Data successfully unpickled:")
 except FileNotFoundError:
         print(f"Error: The file was not found.")
 except EOFError:
