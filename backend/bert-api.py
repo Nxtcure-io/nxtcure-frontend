@@ -42,6 +42,17 @@ df["full_text"] = (
 '''
 df["embedding"] = df["full_text"].apply(get_bert_embedding)
 '''
+try:
+    with open("df_embedding.pickle", 'rb') as df_pickle_in:
+        df_embedding = pickle.load(df_pickle_in)
+        df["embedding"] = df_embedding
+        print(f"Data successfully unpickled:")
+except FileNotFoundError:
+        print(f"Error: The file was not found.")
+except EOFError:
+        print(f"Error: Reached end of file unexpectedly. The file might be empty or corrupted.")
+except Exception as e:
+        print(f"An error occurred during unpickling: {e}")
 
 try:
     with open("trail_embeddings.pickle", 'rb') as pickle_in:

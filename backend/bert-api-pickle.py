@@ -40,10 +40,19 @@ df["full_text"] = (
     df["ExclusionCriteria"].fillna('')
 )
 df["embedding"] = df["full_text"].apply(get_bert_embedding)
+df_embedding =  df["full_text"].apply(get_bert_embedding)
 trial_embeddings = np.vstack(df["embedding"].to_numpy())
 try:
-    with open("trail_embeddings.pickle", 'wb') as pickle_out:
+    with open("trial_embeddings.pickle", 'wb') as pickle_out:
         pickle.dump(trial_embeddings, pickle_out)
+except IOError as e:
+        print(f"Error writing to file: {e}")
+except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+try:
+    with open("df_embedding.pickle", 'wb') as second_pickle_out:
+        pickle.dump(df_embedding, second_pickle_out)
 except IOError as e:
         print(f"Error writing to file: {e}")
 except Exception as e:
