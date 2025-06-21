@@ -1,81 +1,46 @@
-import * as tf from '@tensorflow/tfjs-node';
-import { load } from '@tensorflow-models/universal-sentence-encoder';
-import fs from 'fs';
-import csv from 'csv-parser';
-import path from 'path';
+import { pipeline } from '@xenova/transformers';
 
-class ClinicalTrialMatcher {
+class ClientSideBertMatcher {
     constructor() {
         this.model = null;
         this.trialsData = [];
         this.trialEmbeddings = null;
-        this.trialTexts = [];
         this.isInitialized = false;
     }
 
-    async initialize() {
+    async initialize(trialsData) {
         try {
-            console.log('Loading Universal Sentence Encoder model...');
-            this.model = await load();
-            console.log('Model loaded successfully');
-
-            await this.loadTrialsData();
-            await this.computeEmbeddings();
+            console.log('Loading BERT model in browser...');
+            this.model = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+            this.trialsData = trialsData;
+            
+            console.log('Computing trial embeddings...');
+            await this.computeTrialEmbeddings();
             
             this.isInitialized = true;
-            console.log('BERT matcher initialized successfully');
+            console.log('Client-side BERT matcher initialized successfully');
         } catch (error) {
             console.error('Error initializing BERT matcher:', error);
             throw error;
         }
     }
 
-    async loadTrialsData() {
-        console.log('Loading trials data...');
-        const csvPath = path.join(process.cwd(), 'heart_disease_trials.csv');
-        
-        if (!fs.existsSync(csvPath)) {
-            throw new Error('CSV file not found');
-        }
+    async computeTrialEmbeddings() {
+        const trialTexts = this.trialsData.map(trial => `
+            Condition: ${trial.Condition || ''}
+            Title: ${trial.BriefTitle || ''}
+            Summary: ${trial.BriefSummary || ''}
+            Inclusion Criteria: ${trial.InclusionCriteria || ''}
+            Exclusion Criteria: ${trial.ExclusionCriteria || ''}
+            Intervention: ${trial.InterventionName || ''}
+            Phase: ${trial.Phase || ''}
+            Status: ${trial.OverallStatus || ''}
+            Location: ${trial.LocationCountry || ''}
+            Sponsor: ${trial.LeadSponsor || ''}
+        `.trim());
 
-        return new Promise((resolve, reject) => {
-            fs.createReadStream(csvPath)
-                .pipe(csv())
-                .on('data', (row) => {
-                    this.trialsData.push(row);
-                    
-                    const trialText = `
-                        Condition: ${row.Condition || ''}
-                        Title: ${row.BriefTitle || ''}
-                        Summary: ${row.BriefSummary || ''}
-                        Inclusion Criteria: ${row.InclusionCriteria || ''}
-                        Exclusion Criteria: ${row.ExclusionCriteria || ''}
-                        Intervention: ${row.InterventionName || ''}
-                        Phase: ${row.Phase || ''}
-                        Status: ${row.OverallStatus || ''}
-                        Location: ${row.LocationCountry || ''}
-                        Sponsor: ${row.LeadSponsor || ''}
-                    `.trim();
-                    
-                    this.trialTexts.push(trialText);
-                })
-                .on('end', () => {
-                    console.log(`Loaded ${this.trialsData.length} trials`);
-                    resolve();
-                })
-                .on('error', reject);
-        });
-    }
-
-    async computeEmbeddings() {
-        console.log('Computing embeddings for trials...');
-        
-        if (!this.model) {
-            throw new Error('Model not loaded');
-        }
-
-        this.trialEmbeddings = await this.model.embed(this.trialTexts);
-        console.log('Embeddings computed successfully');
+        this.trialEmbeddings = await this.model(trialTexts);
+        console.log('Trial embeddings computed');
     }
 
     async findMatches(patientDescription, topK = 5, similarityThreshold = 0.3) {
@@ -85,17 +50,15 @@ class ClinicalTrialMatcher {
 
         console.log('Finding matches for:', patientDescription);
 
-        const patientEmbedding = await this.model.embed([patientDescription]);
+        const patientEmbedding = await this.model([patientDescription]);
         
-        const similarities = tf.matMul(patientEmbedding, this.trialEmbeddings.transpose());
-        const similarityScores = await similarities.data();
-        
-        const topIndices = this.getTopKIndices(similarityScores, topK);
+        const similarities = this.computeCosineSimilarity(patientEmbedding.data, this.trialEmbeddings.data);
+        const topIndices = this.getTopKIndices(similarities, topK);
         
         const matches = [];
         for (let i = 0; i < topIndices.length; i++) {
             const idx = topIndices[i];
-            const similarityScore = similarityScores[idx];
+            const similarityScore = similarities[idx];
             
             if (similarityScore >= similarityThreshold) {
                 const trial = this.trialsData[idx];
@@ -127,6 +90,31 @@ class ClinicalTrialMatcher {
         return matches;
     }
 
+    computeCosineSimilarity(vecA, vecB) {
+        const similarities = [];
+        
+        for (let i = 0; i < vecB.length; i++) {
+            const similarity = this.cosineSimilarity(vecA, vecB[i]);
+            similarities.push(similarity);
+        }
+        
+        return similarities;
+    }
+
+    cosineSimilarity(vecA, vecB) {
+        let dotProduct = 0;
+        let normA = 0;
+        let normB = 0;
+        
+        for (let i = 0; i < vecA.length; i++) {
+            dotProduct += vecA[i] * vecB[i];
+            normA += vecA[i] * vecA[i];
+            normB += vecB[i] * vecB[i];
+        }
+        
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
     getTopKIndices(scores, k) {
         const indexed = scores.map((score, index) => ({ score, index }));
         indexed.sort((a, b) => b.score - a.score);
@@ -140,7 +128,7 @@ class ClinicalTrialMatcher {
         return String(val).trim();
     }
 
-    async getTrialDetails(nctId) {
+    getTrialDetails(nctId) {
         if (!this.isInitialized) {
             throw new Error('Matcher not initialized');
         }
@@ -185,17 +173,17 @@ class ClinicalTrialMatcher {
 
 let matcher = null;
 
-export async function initializeMatcher() {
+export async function initializeBertMatcher(trialsData) {
     if (!matcher) {
-        matcher = new ClinicalTrialMatcher();
-        await matcher.initialize();
+        matcher = new ClientSideBertMatcher();
+        await matcher.initialize(trialsData);
     }
     return matcher;
 }
 
-export async function getMatcher() {
+export async function getBertMatcher() {
     if (!matcher) {
-        await initializeMatcher();
+        throw new Error('BERT matcher not initialized. Call initializeBertMatcher first.');
     }
     return matcher;
 } 

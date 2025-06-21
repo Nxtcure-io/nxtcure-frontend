@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { UploadCloud } from "lucide-react";
+import { initializeBertMatcher, getBertMatcher } from "../utils/bertMatcher.js";
 
 export default function Patient() {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ export default function Patient() {
   const [fileName, setFileName] = useState("No file chosen");
   const [historyText, setHistoryText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [bertInitialized, setBertInitialized] = useState(false);
+  const [initializingBert, setInitializingBert] = useState(false);
   
   const [manualData, setManualData] = useState({
     age: "",
@@ -39,6 +42,33 @@ export default function Patient() {
     terms: false,
     deidentify: false
   });
+
+  useEffect(() => {
+    initializeBertOnMount();
+  }, []);
+
+  const initializeBertOnMount = async () => {
+    try {
+      setInitializingBert(true);
+      console.log('Initializing BERT matcher...');
+      
+      const response = await fetch('/api/trials-data');
+      if (!response.ok) {
+        throw new Error('Failed to fetch trials data');
+      }
+      
+      const trialsData = await response.json();
+      await initializeBertMatcher(trialsData);
+      
+      setBertInitialized(true);
+      console.log('BERT matcher initialized successfully');
+    } catch (error) {
+      console.error('Error initializing BERT:', error);
+      setBertInitialized(false);
+    } finally {
+      setInitializingBert(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     setFileName(e.target.files[0]?.name || "No file chosen");
@@ -114,11 +144,44 @@ export default function Patient() {
 
     setLoading(true);
     try {
+      let matches = [];
+      let method = 'keyword';
+
+      if (bertInitialized) {
+        try {
+          const matcher = await getBertMatcher();
+          matches = await matcher.findMatches(textToSend, 5, 0.3);
+          method = 'bert';
+        } catch (error) {
+          console.error('BERT matching failed, falling back to keyword:', error);
+          matches = await fallbackKeywordMatch(textToSend);
+        }
+      } else {
+        matches = await fallbackKeywordMatch(textToSend);
+      }
+      
+      navigate('/results', { 
+        state: { 
+          results: matches || [],
+          patientData: textToSend
+        } 
+      });
+
+    } catch (err) {
+      console.error("Matching Error:", err);
+      alert("Error finding matches. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fallbackKeywordMatch = async (patientDescription) => {
+    try {
       const apiUrl = import.meta.env.VITE_API_URL || "/api";
       const response = await fetch(`${apiUrl}/match`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientDescription: textToSend }),
+        body: JSON.stringify({ patientDescription }),
       });
 
       if (!response.ok) {
@@ -126,24 +189,10 @@ export default function Patient() {
       }
 
       const data = await response.json();
-      
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      
-      navigate('/results', { 
-        state: { 
-          results: data.matches || [],
-          patientData: textToSend
-        } 
-      });
-
-    } catch (err) {
-      console.error("API Error:", err);
-      alert("Error fetching matches. Please try again.");
-    } finally {
-      setLoading(false);
+      return data.matches || [];
+    } catch (error) {
+      console.error('Fallback API error:', error);
+      return [];
     }
   };
 
@@ -170,6 +219,28 @@ export default function Patient() {
       case "manual":
         return (
           <div className="mt-6 space-y-6">
+            {/* BERT Status */}
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center space-x-2">
+                {initializingBert ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-700">Initializing BERT AI model...</span>
+                  </>
+                ) : bertInitialized ? (
+                  <>
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                    <span className="text-green-700">BERT AI model ready for semantic matching</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                    <span className="text-yellow-700">Using keyword matching (BERT unavailable)</span>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
