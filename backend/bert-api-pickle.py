@@ -39,8 +39,9 @@ df["full_text"] = (
     df["InclusionCriteria"].fillna('') + " " +
     df["ExclusionCriteria"].fillna('')
 )
-df["embedding"] = df["full_text"].apply(get_bert_embedding)
+#df["embedding"] = df["full_text"].apply(get_bert_embedding)
 df_embedding =  df["full_text"].apply(get_bert_embedding)
+df["embedding"] = df_embedding
 trial_embeddings = np.vstack(df["embedding"].to_numpy())
 try:
     with open("trial_embeddings.pickle", 'wb') as pickle_out:
