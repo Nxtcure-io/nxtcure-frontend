@@ -6,6 +6,7 @@ import torch
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import BertTokenizer, BertModel
 from sklearn.metrics.pairwise import cosine_similarity
+import pickle
 
 def load_bert_model():
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -31,7 +32,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-'''
 df = pd.read_csv("heart_disease_trials.csv")
 df["full_text"] = (
     df["Condition"].fillna('') + " " +
@@ -40,18 +40,14 @@ df["full_text"] = (
     df["ExclusionCriteria"].fillna('')
 )
 df["embedding"] = df["full_text"].apply(get_bert_embedding)
-'''
-
+trial_embeddings = np.vstack(df["embedding"].to_numpy())
 try:
-    with open("trail_embeddings.pickle", 'rb') as pickle_in:
-        trial_embeddings = pickle.load(pickle_in)
-        print(f"Data successfully unpickled from {filename}:")
-except FileNotFoundError:
-        print(f"Error: The file was not found.")
-except EOFError:
-        print(f"Error: Reached end of file unexpectedly. The file might be empty or corrupted.")
+    with open("trail_embeddings.pickle", 'wb') as pickle_out:
+        pickle.dump(trial_embeddings, pickle_out)
+except IOError as e:
+        print(f"Error writing to file: {e}")
 except Exception as e:
-        print(f"An error occurred during unpickling: {e}")
+        print(f"An unexpected error occurred: {e}")
 
 print("Backend ready!")
 
@@ -68,11 +64,11 @@ def match_trials(request: PatientRequest):
         patient_description = request.description
 
         patient_embedding = get_bert_embedding(patient_description).reshape(1, -1)
-        #unpickled now
         #trial_embeddings = np.vstack(df["embedding"].to_numpy())
         similarities = cosine_similarity(patient_embedding, trial_embeddings)[0]
         top_k = 5
         top_results = similarities.argsort()[::-1][:top_k]
+
         matches = []
         for score, idx in enumerate(top_results, start=1):
             trial = df.iloc[idx]
