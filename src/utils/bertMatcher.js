@@ -6,9 +6,20 @@ class ClientSideBertMatcher {
         this.trialsData = [];
         this.trialEmbeddings = null;
         this.isInitialized = false;
+        this.initializationPromise = null;
     }
 
     async initialize(trialsData) {
+        // Prevent multiple simultaneous initializations
+        if (this.initializationPromise) {
+            return this.initializationPromise;
+        }
+
+        this.initializationPromise = this._initialize(trialsData);
+        return this.initializationPromise;
+    }
+
+    async _initialize(trialsData) {
         try {
             console.log('Loading BERT model in browser...');
             
@@ -29,10 +40,8 @@ class ClientSideBertMatcher {
     }
 
     async computeTrialEmbeddings() {
-        // Limit to first 100 trials for faster processing
-        const limitedTrials = this.trialsData.slice(0, 100);
-        
-        const trialTexts = limitedTrials.map(trial => `
+        // Process all trials for comprehensive matching
+        const trialTexts = this.trialsData.map(trial => `
             Condition: ${trial.Condition || ''}
             Title: ${trial.BriefTitle || ''}
             Summary: ${trial.BriefSummary || ''}
@@ -42,8 +51,23 @@ class ClientSideBertMatcher {
             Status: ${trial.OverallStatus || ''}
         `.trim());
 
-        this.trialEmbeddings = await this.model(trialTexts);
-        console.log('Trial embeddings computed for', limitedTrials.length, 'trials');
+        // Process in smaller batches to prevent blocking
+        const batchSize = 10;
+        const embeddings = [];
+        
+        for (let i = 0; i < trialTexts.length; i += batchSize) {
+            const batch = trialTexts.slice(i, i + batchSize);
+            const batchEmbeddings = await this.model(batch);
+            embeddings.push(...batchEmbeddings.data);
+            
+            // Small delay to prevent blocking
+            if (i + batchSize < trialTexts.length) {
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+        }
+        
+        this.trialEmbeddings = { data: embeddings };
+        console.log('Trial embeddings computed for', this.trialsData.length, 'trials');
     }
 
     async findMatches(patientDescription, topK = 5, similarityThreshold = 0.2) {

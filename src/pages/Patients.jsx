@@ -44,41 +44,51 @@ export default function Patient() {
   });
 
   useEffect(() => {
+    // Initialize BERT in background without blocking UI
     initializeBertOnMount();
   }, []);
 
   const initializeBertOnMount = async () => {
     try {
       setInitializingBert(true);
-      console.log('Initializing BERT matcher...');
+      console.log('Initializing BERT matcher in background...');
       
-      console.log('Fetching trials data from /api/trials-data...');
-      const response = await fetch('/api/trials-data');
-      console.log('Response status:', response.status);
+      // Use setTimeout to prevent blocking the main thread
+      setTimeout(async () => {
+        try {
+          console.log('Fetching trials data from /api/trials-data...');
+          const response = await fetch('/api/trials-data');
+          console.log('Response status:', response.status);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API response error:', errorText);
+            throw new Error(`Failed to fetch trials data: ${response.status} ${errorText}`);
+          }
+          
+          const trialsData = await response.json();
+          console.log('Received trials data:', trialsData.length, 'trials');
+          
+          if (!trialsData || trialsData.length === 0) {
+            throw new Error('No trials data received');
+          }
+          
+          console.log('Initializing BERT matcher with', trialsData.length, 'trials...');
+          await initializeBertMatcher(trialsData);
+          
+          setBertInitialized(true);
+          console.log('BERT matcher initialized successfully');
+        } catch (error) {
+          console.error('Error initializing BERT:', error);
+          setBertInitialized(false);
+        } finally {
+          setInitializingBert(false);
+        }
+      }, 100); // Small delay to prevent blocking
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API response error:', errorText);
-        throw new Error(`Failed to fetch trials data: ${response.status} ${errorText}`);
-      }
-      
-      const trialsData = await response.json();
-      console.log('Received trials data:', trialsData.length, 'trials');
-      
-      if (!trialsData || trialsData.length === 0) {
-        throw new Error('No trials data received');
-      }
-      
-      console.log('Initializing BERT matcher with', trialsData.length, 'trials...');
-      await initializeBertMatcher(trialsData);
-      
-      setBertInitialized(true);
-      console.log('BERT matcher initialized successfully');
     } catch (error) {
-      console.error('Error initializing BERT:', error);
+      console.error('Error in BERT initialization setup:', error);
       setBertInitialized(false);
-      // Don't throw - let it fall back to keyword matching
-    } finally {
       setInitializingBert(false);
     }
   };
@@ -250,20 +260,23 @@ export default function Patient() {
                 {initializingBert ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Initializing BERT AI model...</span>
+                    <span className="text-blue-700">Loading AI model in background...</span>
                   </>
                 ) : bertInitialized ? (
                   <>
                     <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                    <span className="text-green-700">BERT AI model ready for semantic matching</span>
+                    <span className="text-green-700">AI model ready for semantic matching</span>
                   </>
                 ) : (
                   <>
                     <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                    <span className="text-yellow-700">Using keyword matching (BERT unavailable)</span>
+                    <span className="text-yellow-700">Using keyword matching (AI loading in background)</span>
                   </>
                 )}
               </div>
+              <p className="text-xs text-gray-600 mt-1">
+                You can fill out the form while the AI model loads
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
