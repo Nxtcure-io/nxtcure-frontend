@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bookmark, MessageCircle, X, Phone, Mail, User, Building, Brain } from "lucide-react";
+import { Bookmark, MessageCircle, X, Phone, Mail, User, Building } from "lucide-react";
 
 const Results = () => {
   const location = useLocation();
@@ -10,15 +10,11 @@ const Results = () => {
   const [patientData, setPatientData] = useState("");
   const [selectedTrial, setSelectedTrial] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [matchingMethod, setMatchingMethod] = useState("keyword");
 
   useEffect(() => {
     if (location.state && location.state.results) {
       setResults(location.state.results);
       setPatientData(location.state.patientData || "");
-      // Check if any result has similarity score (BERT matching)
-      const hasBertScores = location.state.results.some(result => result.similarity !== undefined);
-      setMatchingMethod(hasBertScores ? "bert" : "keyword");
     } else {
       navigate('/patients');
     }
@@ -32,18 +28,6 @@ const Results = () => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedTrial(null);
-  };
-
-  const getSimilarityColor = (similarity) => {
-    if (similarity >= 0.7) return "text-green-600";
-    if (similarity >= 0.5) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getSimilarityLabel = (similarity) => {
-    if (similarity >= 0.7) return "Excellent Match";
-    if (similarity >= 0.5) return "Good Match";
-    return "Fair Match";
   };
 
   const getTrialLink = (nctId) => {
@@ -61,28 +45,19 @@ const Results = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Clinical Trial Matches</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">EHR Analysis Results</h1>
 
-          {/* Matching Method Indicator */}
           <div className="flex items-center justify-center space-x-4 mb-6">
-            <div className="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full">
-              {matchingMethod === "bert" ? (
-                <>
-                  <Brain size={20} className="text-blue-600" />
-                  <span className="text-blue-700 font-medium">AI-Powered Semantic Matching</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-gray-600 font-medium">Keyword-Based Matching</span>
-                </>
-              )}
-            </div>
+            <span className="text-gray-500">Free Tier: 0 Lookups Remaining</span>
+            <button className="bg-purple-600 text-white px-6 py-2 rounded-full hover:bg-purple-700 transition">
+              Buy Premium
+            </button>
           </div>
 
           <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            We've analyzed your information and found clinical trials that match your health profile. 
-            {matchingMethod === "bert" && " Our AI model has evaluated semantic similarity to provide the most relevant matches."}
-            Explore the options below to take the next step in your care journey.
+            We've analyzed your Electronic Health Record and found clinical trials that 
+            match your health profile. Explore the options below to take the next step in 
+            your care journey.
           </p>
         </motion.div>
 
@@ -98,16 +73,6 @@ const Results = () => {
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  {/* Similarity Score for BERT */}
-                  {matchingMethod === "bert" && trial.similarity !== undefined && (
-                    <div className="flex items-center space-x-2 mb-4">
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${getSimilarityColor(trial.similarity)} bg-opacity-10 ${getSimilarityColor(trial.similarity).replace('text-', 'bg-')}`}>
-                        {getSimilarityLabel(trial.similarity)}
-                      </div>
-                      <Brain size={16} className="text-blue-600" />
-                    </div>
-                  )}
-
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">
                     {trial.title}
                   </h3>
@@ -124,9 +89,6 @@ const Results = () => {
                     </p>
                     <p>
                       <span className="font-medium">Status:</span> {trial.status}
-                    </p>
-                    <p>
-                      <span className="font-medium">Phase:</span> {trial.phase || "Not specified"}
                     </p>
                     <p>
                       <span className="font-medium">Enrollment:</span> {trial.enrollment ? `${trial.enrollment} participants` : "Not specified"}
@@ -205,18 +167,6 @@ const Results = () => {
                   <X size={24} />
                 </button>
               </div>
-
-              {/* Similarity Score in Modal */}
-              {matchingMethod === "bert" && selectedTrial.similarity !== undefined && (
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Brain size={20} className="text-blue-600" />
-                    <span className="font-medium text-blue-700">
-                      AI Match Score: {getSimilarityLabel(selectedTrial.similarity)}
-                    </span>
-                  </div>
-                </div>
-              )}
 
               <div className="space-y-6">
                 {/* Basic Information */}

@@ -189,8 +189,29 @@ export default function Patient() {
           matches = await fallbackKeywordMatch(textToSend);
         }
       } else {
-        console.log('BERT not initialized, using keyword matching...');
-        matches = await fallbackKeywordMatch(textToSend);
+        console.log('BERT not initialized, waiting for AI...');
+        // Wait for BERT to initialize
+        let attempts = 0;
+        while (!bertInitialized && attempts < 30) { // Wait up to 30 seconds
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          attempts++;
+        }
+        
+        if (bertInitialized) {
+          console.log('BERT initialized, attempting matching...');
+          try {
+            const matcher = await getBertMatcher();
+            matches = await matcher.findMatches(textToSend, 5, 0.2);
+            matchingMethod = 'bert';
+            console.log('BERT matching successful, found', matches.length, 'matches');
+          } catch (error) {
+            console.error('BERT matching failed, falling back to keyword:', error);
+            matches = await fallbackKeywordMatch(textToSend);
+          }
+        } else {
+          console.log('BERT failed to initialize, using keyword matching...');
+          matches = await fallbackKeywordMatch(textToSend);
+        }
       }
       
       console.log('Final matches:', matches.length, 'using method:', matchingMethod);
@@ -260,22 +281,22 @@ export default function Patient() {
                 {initializingBert ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Loading AI model in background...</span>
+                    <span className="text-blue-700">Loading AI model...</span>
                   </>
                 ) : bertInitialized ? (
                   <>
                     <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                    <span className="text-green-700">AI model ready for semantic matching</span>
+                    <span className="text-green-700">AI model ready</span>
                   </>
                 ) : (
                   <>
-                    <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                    <span className="text-yellow-700">Using keyword matching (AI loading in background)</span>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-700">Loading AI model...</span>
                   </>
                 )}
               </div>
               <p className="text-xs text-gray-600 mt-1">
-                You can fill out the form while the AI model loads
+                Please wait while the AI model loads
               </p>
             </div>
 
