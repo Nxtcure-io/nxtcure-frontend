@@ -11,8 +11,15 @@ export default function handler(req, res) {
   }
 
   try {
-    // Read the CSV file
-    const csvPath = path.join(__dirname, '../heart_disease_trials.csv');
+    // Read the CSV file - use absolute path
+    const csvPath = path.join(process.cwd(), 'heart_disease_trials.csv');
+    console.log('Reading CSV from:', csvPath);
+    
+    if (!fs.existsSync(csvPath)) {
+      console.error('CSV file not found at:', csvPath);
+      return res.status(404).json({ error: 'Trials data not found' });
+    }
+    
     const csvData = fs.readFileSync(csvPath, 'utf8');
     
     // Parse CSV to JSON
@@ -33,9 +40,10 @@ export default function handler(req, res) {
       }
     }
     
+    console.log(`Returning ${trials.length} trials`);
     res.status(200).json(trials);
   } catch (error) {
     console.error('Error reading trials data:', error);
-    res.status(500).json({ error: 'Failed to load trials data' });
+    res.status(500).json({ error: 'Failed to load trials data', details: error.message });
   }
 } 

@@ -1,8 +1,5 @@
 import { pipeline } from '@xenova/transformers';
 
-const MODEL_ID = 'Xenova/all-MiniLM-L6-v2-quantized'; // much smaller, faster
-// If quantized model fails, fallback to 'Xenova/distilbert-base-uncased'
-
 class ClientSideBertMatcher {
     constructor() {
         this.model = null;
@@ -13,13 +10,11 @@ class ClientSideBertMatcher {
 
     async initialize(trialsData) {
         try {
-            console.log('Loading quantized BERT model in browser...');
-            try {
-                this.model = await pipeline('feature-extraction', MODEL_ID);
-            } catch (err) {
-                console.warn('Quantized model failed, falling back to distilbert-base-uncased', err);
-                this.model = await pipeline('feature-extraction', 'Xenova/distilbert-base-uncased');
-            }
+            console.log('Loading BERT model in browser...');
+            
+            // Use a reliable, smaller model
+            this.model = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+            
             this.trialsData = trialsData;
             
             console.log('Computing trial embeddings...');
@@ -34,24 +29,24 @@ class ClientSideBertMatcher {
     }
 
     async computeTrialEmbeddings() {
-        const trialTexts = this.trialsData.map(trial => `
+        // Limit to first 100 trials for faster processing
+        const limitedTrials = this.trialsData.slice(0, 100);
+        
+        const trialTexts = limitedTrials.map(trial => `
             Condition: ${trial.Condition || ''}
             Title: ${trial.BriefTitle || ''}
             Summary: ${trial.BriefSummary || ''}
-            Inclusion Criteria: ${trial.InclusionCriteria || ''}
-            Exclusion Criteria: ${trial.ExclusionCriteria || ''}
+            Inclusion: ${trial.InclusionCriteria || ''}
             Intervention: ${trial.InterventionName || ''}
             Phase: ${trial.Phase || ''}
             Status: ${trial.OverallStatus || ''}
-            Location: ${trial.LocationCountry || ''}
-            Sponsor: ${trial.LeadSponsor || ''}
         `.trim());
 
         this.trialEmbeddings = await this.model(trialTexts);
-        console.log('Trial embeddings computed');
+        console.log('Trial embeddings computed for', limitedTrials.length, 'trials');
     }
 
-    async findMatches(patientDescription, topK = 5, similarityThreshold = 0.3) {
+    async findMatches(patientDescription, topK = 5, similarityThreshold = 0.2) {
         if (!this.isInitialized) {
             throw new Error('Matcher not initialized');
         }

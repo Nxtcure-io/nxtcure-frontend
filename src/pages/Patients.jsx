@@ -52,12 +52,24 @@ export default function Patient() {
       setInitializingBert(true);
       console.log('Initializing BERT matcher...');
       
+      console.log('Fetching trials data from /api/trials-data...');
       const response = await fetch('/api/trials-data');
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch trials data');
+        const errorText = await response.text();
+        console.error('API response error:', errorText);
+        throw new Error(`Failed to fetch trials data: ${response.status} ${errorText}`);
       }
       
       const trialsData = await response.json();
+      console.log('Received trials data:', trialsData.length, 'trials');
+      
+      if (!trialsData || trialsData.length === 0) {
+        throw new Error('No trials data received');
+      }
+      
+      console.log('Initializing BERT matcher with', trialsData.length, 'trials...');
       await initializeBertMatcher(trialsData);
       
       setBertInitialized(true);
@@ -65,6 +77,7 @@ export default function Patient() {
     } catch (error) {
       console.error('Error initializing BERT:', error);
       setBertInitialized(false);
+      // Don't throw - let it fall back to keyword matching
     } finally {
       setInitializingBert(false);
     }
@@ -115,7 +128,10 @@ export default function Patient() {
   };
 
   const handleFindTrials = async (inputText = null) => {
+    console.log('handleFindTrials called with method:', method);
+    
     if (!validateForm()) {
+      console.log('Form validation failed');
       return;
     }
 
@@ -124,6 +140,7 @@ export default function Patient() {
     if (!textToSend) {
       if (method === "history") {
         textToSend = historyText;
+        console.log('Using history text:', textToSend);
       } else if (method === "manual") {
         const priorTreatmentsText = manualData.priorTreatments.length > 0 
           ? manualData.priorTreatments.join(", ") + (otherPriorTreatment ? `, ${otherPriorTreatment}` : "")
@@ -134,31 +151,39 @@ export default function Patient() {
           : "none";
 
         textToSend = `I am ${manualData.age} years old and I am ${manualData.gender}. I am looking for a clinical trial for ${manualData.condition}. I currently take ${manualData.medications || "no medications"}. I have a family history of ${manualData.familyConditions || "no family history"}. I was diagnosed in ${manualData.diagnosisDate} and am currently in ${manualData.diseaseStatus} status. I previously received ${priorTreatmentsText}. I had ${manualData.testProcedure || "no specific tests"} which showed ${manualData.testResult || "no specific results"}. I live in ${manualData.city}, ${manualData.state} and am willing to travel up to ${manualData.travelDistance}. I have ${manualData.drugAllergies || "no known drug allergies"}. My ethnicity is ${manualData.ethnicity}. My height is ${manualData.height} and my weight is ${manualData.weight} lbs. I have ${comorbiditiesText} as comorbidities.`;
+        console.log('Generated text from form:', textToSend);
       }
     }
 
     if (!textToSend || !textToSend.trim()) {
+      console.log('No text to send');
       alert("Please enter a valid description.");
       return;
     }
 
+    console.log('Starting matching process...');
     setLoading(true);
     try {
       let matches = [];
-      let method = 'keyword';
+      let matchingMethod = 'keyword';
 
       if (bertInitialized) {
+        console.log('BERT is initialized, attempting BERT matching...');
         try {
           const matcher = await getBertMatcher();
-          matches = await matcher.findMatches(textToSend, 5, 0.3);
-          method = 'bert';
+          matches = await matcher.findMatches(textToSend, 5, 0.2);
+          matchingMethod = 'bert';
+          console.log('BERT matching successful, found', matches.length, 'matches');
         } catch (error) {
           console.error('BERT matching failed, falling back to keyword:', error);
           matches = await fallbackKeywordMatch(textToSend);
         }
       } else {
+        console.log('BERT not initialized, using keyword matching...');
         matches = await fallbackKeywordMatch(textToSend);
       }
+      
+      console.log('Final matches:', matches.length, 'using method:', matchingMethod);
       
       navigate('/results', { 
         state: { 
