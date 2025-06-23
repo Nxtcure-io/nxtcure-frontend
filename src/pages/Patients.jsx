@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, Brain, Loader2 } from "lucide-react";
 import { initializeBertMatcher, getBertMatcher } from "../utils/bertMatcher.js";
 
 export default function Patient() {
@@ -12,6 +12,7 @@ export default function Patient() {
   const [loading, setLoading] = useState(false);
   const [bertInitialized, setBertInitialized] = useState(false);
   const [initializingBert, setInitializingBert] = useState(false);
+  const [showLoadingPage, setShowLoadingPage] = useState(false);
   
   const [manualData, setManualData] = useState({
     age: "",
@@ -173,10 +174,13 @@ export default function Patient() {
 
     console.log('Starting matching process...');
     setLoading(true);
+    setShowLoadingPage(true);
+    
     try {
       let matches = [];
       let matchingMethod = 'keyword';
 
+      // Try BERT if available, otherwise use keyword matching immediately
       if (bertInitialized) {
         console.log('BERT is initialized, attempting BERT matching...');
         try {
@@ -189,29 +193,8 @@ export default function Patient() {
           matches = await fallbackKeywordMatch(textToSend);
         }
       } else {
-        console.log('BERT not initialized, waiting for AI...');
-        // Wait for BERT to initialize
-        let attempts = 0;
-        while (!bertInitialized && attempts < 30) { // Wait up to 30 seconds
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          attempts++;
-        }
-        
-        if (bertInitialized) {
-          console.log('BERT initialized, attempting matching...');
-          try {
-            const matcher = await getBertMatcher();
-            matches = await matcher.findMatches(textToSend, 5, 0.2);
-            matchingMethod = 'bert';
-            console.log('BERT matching successful, found', matches.length, 'matches');
-          } catch (error) {
-            console.error('BERT matching failed, falling back to keyword:', error);
-            matches = await fallbackKeywordMatch(textToSend);
-          }
-        } else {
-          console.log('BERT failed to initialize, using keyword matching...');
-          matches = await fallbackKeywordMatch(textToSend);
-        }
+        console.log('BERT not initialized, using keyword matching immediately...');
+        matches = await fallbackKeywordMatch(textToSend);
       }
       
       console.log('Final matches:', matches.length, 'using method:', matchingMethod);
@@ -228,6 +211,7 @@ export default function Patient() {
       alert("Error finding matches. Please try again.");
     } finally {
       setLoading(false);
+      setShowLoadingPage(false);
     }
   };
 
@@ -251,6 +235,23 @@ export default function Patient() {
       return [];
     }
   };
+
+  // Loading Page Component
+  if (showLoadingPage) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Finding Clinical Trials</h2>
+          <p className="text-gray-600 mb-6">Analyzing your information and matching with available trials...</p>
+          <div className="flex items-center justify-center space-x-2 text-purple-600">
+            <Brain size={20} />
+            <span className="text-sm">AI-powered matching in progress</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderUploadMethod = () => {
     switch (method) {
@@ -281,7 +282,7 @@ export default function Patient() {
                 {initializingBert ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Loading AI model...</span>
+                    <span className="text-blue-700">Loading AI model in background...</span>
                   </>
                 ) : bertInitialized ? (
                   <>
@@ -291,12 +292,12 @@ export default function Patient() {
                 ) : (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Loading AI model...</span>
+                    <span className="text-blue-700">Loading AI model in background...</span>
                   </>
                 )}
               </div>
               <p className="text-xs text-gray-600 mt-1">
-                Please wait while the AI model loads
+                You can submit the form anytime - AI will be used if available
               </p>
             </div>
 

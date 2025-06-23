@@ -51,8 +51,8 @@ class ClientSideBertMatcher {
             Status: ${trial.OverallStatus || ''}
         `.trim());
 
-        // Process in smaller batches to prevent blocking
-        const batchSize = 10;
+        // Process in larger batches for faster processing
+        const batchSize = 25; // Increased from 10 for faster processing
         const embeddings = [];
         
         for (let i = 0; i < trialTexts.length; i += batchSize) {
@@ -60,9 +60,9 @@ class ClientSideBertMatcher {
             const batchEmbeddings = await this.model(batch);
             embeddings.push(...batchEmbeddings.data);
             
-            // Small delay to prevent blocking
+            // Reduced delay for faster processing
             if (i + batchSize < trialTexts.length) {
-                await new Promise(resolve => setTimeout(resolve, 10));
+                await new Promise(resolve => setTimeout(resolve, 5)); // Reduced from 10ms
             }
         }
         
