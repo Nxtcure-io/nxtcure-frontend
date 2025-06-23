@@ -46,6 +46,10 @@ const Results = () => {
     return "Fair Match";
   };
 
+  const getTrialLink = (nctId) => {
+    return `https://clinicaltrials.gov/ct2/show/${nctId}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
@@ -98,7 +102,7 @@ const Results = () => {
                   {matchingMethod === "bert" && trial.similarity !== undefined && (
                     <div className="flex items-center space-x-2 mb-4">
                       <div className={`px-3 py-1 rounded-full text-sm font-medium ${getSimilarityColor(trial.similarity)} bg-opacity-10 ${getSimilarityColor(trial.similarity).replace('text-', 'bg-')}`}>
-                        {getSimilarityLabel(trial.similarity)} ({Math.round(trial.similarity * 100)}%)
+                        {getSimilarityLabel(trial.similarity)}
                       </div>
                       <Brain size={16} className="text-blue-600" />
                     </div>
@@ -127,6 +131,19 @@ const Results = () => {
                     <p>
                       <span className="font-medium">Enrollment:</span> {trial.enrollment ? `${trial.enrollment} participants` : "Not specified"}
                     </p>
+                    {trial.nct_id && (
+                      <p>
+                        <span className="font-medium">Study ID:</span>{" "}
+                        <a 
+                          href={getTrialLink(trial.nct_id)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          {trial.nct_id}
+                        </a>
+                      </p>
+                    )}
                   </div>
 
                   <div className="mt-6 flex space-x-4">
@@ -195,7 +212,7 @@ const Results = () => {
                   <div className="flex items-center space-x-2">
                     <Brain size={20} className="text-blue-600" />
                     <span className="font-medium text-blue-700">
-                      AI Match Score: {Math.round(selectedTrial.similarity * 100)}% ({getSimilarityLabel(selectedTrial.similarity)})
+                      AI Match Score: {getSimilarityLabel(selectedTrial.similarity)}
                     </span>
                   </div>
                 </div>
@@ -207,6 +224,19 @@ const Results = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Trial Information</h3>
                   <div className="space-y-2 text-gray-700">
                     <p><span className="font-medium">NCT ID:</span> {selectedTrial.nct_id}</p>
+                    {selectedTrial.nct_id && (
+                      <p>
+                        <span className="font-medium">Study Link:</span>{" "}
+                        <a 
+                          href={getTrialLink(selectedTrial.nct_id)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          View on ClinicalTrials.gov
+                        </a>
+                      </p>
+                    )}
                     <p><span className="font-medium">Title:</span> {selectedTrial.title}</p>
                     <p><span className="font-medium">Condition:</span> {selectedTrial.condition}</p>
                     <p><span className="font-medium">Status:</span> {selectedTrial.status}</p>
