@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { UploadCloud, Brain, Loader2 } from "lucide-react";
-import { initializeBertMatcher, getBertMatcher } from "../utils/bertMatcher.js";
 
 export default function Patient() {
   const navigate = useNavigate();
   const [method, setMethod] = useState("history");
   const [historyText, setHistoryText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [bertInitialized, setBertInitialized] = useState(false);
-  const [initializingBert, setInitializingBert] = useState(false);
   const [showLoadingPage, setShowLoadingPage] = useState(false);
   
   const [manualData, setManualData] = useState({
@@ -42,56 +39,6 @@ export default function Patient() {
     terms: false,
     deidentify: false
   });
-
-  useEffect(() => {
-    // Initialize BERT in background without blocking UI
-    initializeBertOnMount();
-  }, []);
-
-  const initializeBertOnMount = async () => {
-    try {
-      setInitializingBert(true);
-      console.log('Initializing BERT matcher in background...');
-      
-      // Use setTimeout to prevent blocking the main thread
-      setTimeout(async () => {
-        try {
-          console.log('Fetching trials data from /api/trials-data...');
-          const response = await fetch('/api/trials-data');
-          console.log('Response status:', response.status);
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API response error:', errorText);
-            throw new Error(`Failed to fetch trials data: ${response.status} ${errorText}`);
-          }
-          
-          const trialsData = await response.json();
-          console.log('Received trials data:', trialsData.length, 'trials');
-          
-          if (!trialsData || trialsData.length === 0) {
-            throw new Error('No trials data received');
-          }
-          
-          console.log('Initializing BERT matcher with', trialsData.length, 'trials...');
-          await initializeBertMatcher(trialsData);
-          
-          setBertInitialized(true);
-          console.log('BERT matcher initialized successfully');
-        } catch (error) {
-          console.error('Error initializing BERT:', error);
-          setBertInitialized(false);
-        } finally {
-          setInitializingBert(false);
-        }
-      }, 100); // Small delay to prevent blocking
-      
-    } catch (error) {
-      console.error('Error in BERT initialization setup:', error);
-      setBertInitialized(false);
-      setInitializingBert(false);
-    }
-  };
 
   const handleManualDataChange = (field, value) => {
     setManualData(prev => ({
@@ -172,27 +119,23 @@ export default function Patient() {
     setShowLoadingPage(true);
     
     try {
-      let matches = [];
-      let matchingMethod = 'keyword';
+      console.log('Calling backend for BERT matching...');
+      const apiUrl = import.meta.env.VITE_API_URL || "/api";
+      const response = await fetch(`${apiUrl}/bert-match`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientDescription: textToSend }),
+      });
 
-      // Try BERT if available, otherwise use keyword matching immediately
-      if (bertInitialized) {
-        console.log('BERT is initialized, attempting BERT matching...');
-        try {
-          const matcher = await getBertMatcher();
-          matches = await matcher.findMatches(textToSend, 5, 0.2);
-          matchingMethod = 'bert';
-          console.log('BERT matching successful, found', matches.length, 'matches');
-        } catch (error) {
-          console.error('BERT matching failed, falling back to keyword:', error);
-          matches = await fallbackKeywordMatch(textToSend);
-        }
-      } else {
-        console.log('BERT not initialized, using keyword matching immediately...');
-        matches = await fallbackKeywordMatch(textToSend);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API response error:', errorText);
+        throw new Error(`Failed to get matches: ${response.status} ${errorText}`);
       }
+
+      const matches = await response.json();
       
-      console.log('Final matches:', matches.length, 'using method:', matchingMethod);
+      console.log('Final matches from API:', matches.length);
       
       navigate('/results', { 
         state: { 
@@ -207,27 +150,6 @@ export default function Patient() {
     } finally {
       setLoading(false);
       setShowLoadingPage(false);
-    }
-  };
-
-  const fallbackKeywordMatch = async (patientDescription) => {
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "/api";
-      const response = await fetch(`${apiUrl}/match`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patientDescription }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.matches || [];
-    } catch (error) {
-      console.error('Fallback API error:', error);
-      return [];
     }
   };
 
@@ -259,43 +181,11 @@ export default function Patient() {
               onChange={(e) => setHistoryText(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg min-h-[150px] focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
-            <button
-              onClick={() => handleFindTrials()}
-              className="bg-gradient-to-r from-[#5F5AE8] to-[#BB5AE7] text-white px-6 py-3 rounded-lg w-full transition hover:opacity-90"
-              disabled={loading}
-            >
-              {loading ? "Finding Trials..." : "Find Matching Trials"}
-            </button>
           </div>
         );
       case "manual":
         return (
           <div className="mt-6 space-y-6">
-            {/* BERT Status */}
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center space-x-2">
-                {initializingBert ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Loading AI model in background...</span>
-                  </>
-                ) : bertInitialized ? (
-                  <>
-                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                    <span className="text-green-700">AI model ready</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700">Loading AI model in background...</span>
-                  </>
-                )}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">
-                You can submit the form anytime - AI will be used if available
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
@@ -560,14 +450,6 @@ export default function Patient() {
                 className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
-
-            <button
-              onClick={() => handleFindTrials()}
-              className="bg-gradient-to-r from-[#5F5AE8] to-[#BB5AE7] text-white px-6 py-3 rounded-lg w-full transition hover:opacity-90"
-              disabled={loading}
-            >
-              {loading ? "Finding Trials..." : "Find Matching Trials"}
-            </button>
           </div>
         );
       case "mychart":
@@ -586,121 +468,123 @@ export default function Patient() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-16">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-2xl shadow-lg border border-gray-200"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Patient Information</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Choose how you'd like to provide your medical information. We'll use this to find 
-            the most relevant clinical trials for your condition.
-          </p>
-        </motion.div>
+          <div className="p-6 sm:p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Find Your Clinical Trial</h1>
+              <p className="mt-3 text-md text-gray-600 max-w-2xl mx-auto">
+                Provide your medical information using one of the methods below. Our AI will find the best trials for you.
+              </p>
+            </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white rounded-xl p-8 shadow-sm border border-gray-200"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <button
-              onClick={() => setMethod("history")}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                method === "history"
-                  ? "border-purple-500 bg-purple-50 text-purple-700"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="text-center">
-                <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-semibold">H</span>
-                </div>
-                <h3 className="font-semibold">Medical History</h3>
-                <p className="text-sm text-gray-600">Enter your medical history</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setMethod("manual")}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                method === "manual"
-                  ? "border-purple-500 bg-purple-50 text-purple-700"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="text-center">
-                <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-semibold">F</span>
-                </div>
-                <h3 className="font-semibold">Form Entry</h3>
-                <p className="text-sm text-gray-600">Fill out detailed form</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setMethod("mychart")}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                method === "mychart"
-                  ? "border-purple-500 bg-purple-50 text-purple-700"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="text-center">
-                <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-semibold">M</span>
-                </div>
-                <h3 className="font-semibold">MyChart</h3>
-                <p className="text-sm text-gray-600">Connect your MyChart</p>
-              </div>
-            </button>
-          </div>
-
-          {renderUploadMethod()}
-
-          {(method === "history" || method === "manual") && (
-            <div className="mt-8 p-6 bg-gray-50 rounded-lg">
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={checkboxes.terms}
-                    onChange={(e) => handleCheckboxChange("terms", e.target.checked)}
-                    className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      I accept the Terms and Conditions
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      By checking this box, you agree to our terms of service and privacy policy.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={checkboxes.deidentify}
-                    onChange={(e) => handleCheckboxChange("deidentify", e.target.checked)}
-                    className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                  />
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Enable De-Identify Data
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Remove personally identifiable information from your data for enhanced privacy.
-                    </p>
-                  </div>
-                </div>
+            {/* Tab-like buttons */}
+            <div className="mb-6">
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setMethod("history")}
+                  className={`flex-1 py-3 text-center font-medium text-sm sm:text-base transition-colors duration-200 ${
+                    method === 'history' 
+                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Medical History
+                </button>
+                <button
+                  onClick={() => setMethod("manual")}
+                  className={`flex-1 py-3 text-center font-medium text-sm sm:text-base transition-colors duration-200 ${
+                    method === 'manual' 
+                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Detailed Form
+                </button>
+                <button
+                  onClick={() => setMethod("mychart")}
+                  className={`flex-1 py-3 text-center font-medium text-sm sm:text-base transition-colors duration-200 ${
+                    method === 'mychart' 
+                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  MyChart
+                </button>
               </div>
             </div>
-          )}
+            
+            <form onSubmit={(e) => { e.preventDefault(); handleFindTrials(); }}>
+              {renderUploadMethod()}
+
+              {(method === "history" || method === "manual") && (
+                <>
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          checked={checkboxes.terms}
+                          onChange={(e) => handleCheckboxChange("terms", e.target.checked)}
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                        <div>
+                          <label htmlFor="terms" className="text-sm font-medium text-gray-800">
+                            I accept the Terms and Conditions
+                          </label>
+                          <p className="text-xs text-gray-500 mt-1">
+                            You agree to our terms of service and privacy policy.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <input
+                          type="checkbox"
+                          id="deidentify"
+                          checked={checkboxes.deidentify}
+                          onChange={(e) => handleCheckboxChange("deidentify", e.target.checked)}
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                        <div>
+                          <label htmlFor="deidentify" className="text-sm font-medium text-gray-800">
+                            De-Identify My Data
+                          </label>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Enable this to protect your privacy before submitting.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Finding Trials...
+                        </>
+                      ) : (
+                        "Find Clinical Trials"
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
+            </form>
+          </div>
         </motion.div>
       </div>
     </div>
