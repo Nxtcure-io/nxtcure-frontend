@@ -22,7 +22,7 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Load clinical trials data
 print("Loading clinical trials data...")
-df = pd.read_csv("heart_disease_trials.csv")
+df = pd.read_csv("all_conditions_trials.csv")
 
 # Combine relevant text fields for embedding
 df["full_text"] = (

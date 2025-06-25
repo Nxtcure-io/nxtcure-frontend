@@ -51,7 +51,7 @@ async def startup_event():
     global matcher
     try:
         matcher = ClinicalTrialMatcher()
-        csv_file = 'heart_disease_trials.csv'
+        csv_file = 'all_conditions_trials.csv'
         
         if not os.path.exists(csv_file):
             raise FileNotFoundError(f"CSV file {csv_file} not found")

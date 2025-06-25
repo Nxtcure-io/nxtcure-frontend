@@ -22,7 +22,7 @@ def get_bert_embedding(text):
 
 @st.cache_data
 def load_trials():
-    df = pd.read_csv("heart_disease_trials.csv")
+    df = pd.read_csv("all_conditions_trials.csv")
     df["full_text"] = (
         df["Condition"].fillna('') + " " +
         df["BriefSummary"].fillna('') + " " +

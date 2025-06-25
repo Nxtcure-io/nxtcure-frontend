@@ -23,7 +23,7 @@ def load_heart_disease_data():
     global df
     try:
         print("Loading heart disease clinical trials data...")
-        df = pd.read_csv("heart_disease_trials.csv")
+        df = pd.read_csv("all_conditions_trials.csv")
         print(f"Successfully loaded {len(df)} clinical trials")
         
         # Clean the data

@@ -27,7 +27,7 @@ def load_and_process_data():
     
     try:
         print("Loading clinical trials data...")
-        df = pd.read_csv("heart_disease_trials.csv")
+        df = pd.read_csv("all_conditions_trials.csv")
         print(f"Loaded {len(df)} clinical trials")
         
         # Combine relevant text fields for matching

@@ -148,7 +148,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Patient description is required' });
         }
         
-        const csvPath = path.join(process.cwd(), 'heart_disease_trials.csv');
+        const csvPath = path.join(process.cwd(), 'all_conditions_trials.csv');
         
         if (!fs.existsSync(csvPath)) {
             return res.status(500).json({ error: 'Trials data not found' });

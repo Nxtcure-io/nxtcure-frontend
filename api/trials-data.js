@@ -12,7 +12,7 @@ export default function handler(req, res) {
 
   try {
     // Read the CSV file - use absolute path
-    const csvPath = path.join(process.cwd(), 'heart_disease_trials.csv');
+    const csvPath = path.join(process.cwd(), 'all_conditions_trials.csv');
     console.log('Reading CSV from:', csvPath);
     
     if (!fs.existsSync(csvPath)) {

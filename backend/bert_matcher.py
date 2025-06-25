@@ -160,7 +160,7 @@ class ClinicalTrialMatcher:
 
 def main():
     matcher = ClinicalTrialMatcher()
-    matcher.load_trials_data('heart_disease_trials.csv')
+    matcher.load_trials_data('all_conditions_trials.csv')
     
     embeddings_file = 'trial_embeddings.pt'
     if not matcher.load_embeddings(embeddings_file):
