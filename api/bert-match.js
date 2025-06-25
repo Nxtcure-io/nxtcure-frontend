@@ -38,9 +38,16 @@ function cosineSimilarity(a, b) {
 }
 
 function readTrialsFromCSV() {
-  const csvPath = path.join(__dirname, '../filtered_trials.csv');
+  const csvPath = path.resolve('./filtered_trials.csv');
   if (!fs.existsSync(csvPath)) {
-    throw new Error('filtered_trials.csv not found');
+    // Fallback for local development if the file is in the parent directory
+    const localPath = path.resolve(__dirname, '../filtered_trials.csv');
+    if (fs.existsSync(localPath)) {
+      const csvData = fs.readFileSync(localPath, 'utf8');
+      const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
+      return parsed.data;
+    }
+    throw new Error('filtered_trials.csv not found at ' + csvPath + ' or ' + localPath);
   }
   const csvData = fs.readFileSync(csvPath, 'utf8');
   const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
