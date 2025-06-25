@@ -97,7 +97,22 @@ export default async function handler(req, res) {
         const nctId = nctIds[item.idx];
         const trial = trialsMap.get(nctId);
         return {
-          ...trial, // Return all data from the CSV row
+          nct_id: trial.NCTId,
+          title: trial.BriefTitle,
+          condition: trial.Condition,
+          summary: trial.BriefSummary,
+          inclusion: trial.InclusionCriteria,
+          exclusion: trial.ExclusionCriteria,
+          country: trial.LocationCountry,
+          status: trial.OverallStatus,
+          phase: trial.Phase,
+          enrollment: trial.EnrollmentCount,
+          contact_name: trial.ContactName,
+          contact_role: trial.ContactRole,
+          contact_phone: trial.ContactPhone,
+          contact_email: trial.ContactEmail,
+          lead_sponsor: trial.LeadSponsor,
+          sponsor_type: trial.SponsorType,
           score: item.score
         };
     });
