@@ -38,9 +38,9 @@ function cosineSimilarity(a, b) {
 }
 
 function readTrialsFromCSV() {
-  const csvPath = path.join(__dirname, '../all_conditions_trials.csv');
+  const csvPath = path.join(__dirname, '../filtered_trials.csv');
   if (!fs.existsSync(csvPath)) {
-    throw new Error('all_conditions_trials.csv not found');
+    throw new Error('filtered_trials.csv not found');
   }
   const csvData = fs.readFileSync(csvPath, 'utf8');
   const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
@@ -114,7 +114,7 @@ export default async function handler(req, res) {
       .map(item => item.idx);
 
     // Prepare matches
-    let matches = topIndices.map(idx => {
+    const matches = topIndices.map(idx => {
       const trial = trials[idx];
       return {
         nct_id: trial.NCTId,
@@ -134,15 +134,6 @@ export default async function handler(req, res) {
         lead_sponsor: trial.LeadSponsor,
         sponsor_type: trial.SponsorType
       };
-    });
-
-    // Filter for US, RECRUITING, and has contact email or phone
-    matches = matches.filter(trial => {
-      const isUS = trial.country && trial.country.toLowerCase().includes('united states');
-      const isRecruiting = trial.status && trial.status.toUpperCase() === 'RECRUITING';
-      const hasContact = (trial.contact_email && trial.contact_email.trim() && trial.contact_email.toLowerCase() !== 'n/a') ||
-                         (trial.contact_phone && trial.contact_phone.trim() && trial.contact_phone.toLowerCase() !== 'n/a');
-      return isUS && isRecruiting && hasContact;
     });
 
     res.status(200).json({ matches, total_found: matches.length, method: 'bert' });
