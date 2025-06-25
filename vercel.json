@@ -4,7 +4,8 @@
   "framework": "vite",
   "functions": {
     "api/bert-match.js": {
-      "includeFiles": "filtered_trials.csv"
+      "includeFiles": "filtered_trials.csv",
+      "maxDuration": 15
     }
   }
 } 
