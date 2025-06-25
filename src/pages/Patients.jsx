@@ -6,8 +6,7 @@ import { initializeBertMatcher, getBertMatcher } from "../utils/bertMatcher.js";
 
 export default function Patient() {
   const navigate = useNavigate();
-  const [method, setMethod] = useState("upload");
-  const [fileName, setFileName] = useState("No file chosen");
+  const [method, setMethod] = useState("history");
   const [historyText, setHistoryText] = useState("");
   const [loading, setLoading] = useState(false);
   const [bertInitialized, setBertInitialized] = useState(false);
@@ -92,10 +91,6 @@ export default function Patient() {
       setBertInitialized(false);
       setInitializingBert(false);
     }
-  };
-
-  const handleFileChange = (e) => {
-    setFileName(e.target.files[0]?.name || "No file chosen");
   };
 
   const handleManualDataChange = (field, value) => {
@@ -575,33 +570,6 @@ export default function Patient() {
             </button>
           </div>
         );
-      case "upload":
-        return (
-          <div className="border-2 border-dashed border-gray-400 rounded-xl p-6 mt-6 text-center bg-white shadow-sm">
-            <label className="cursor-pointer block">
-              <div className="flex flex-col items-center">
-                <UploadCloud size={48} className="text-purple-400" />
-                <span className="font-semibold text-gray-600 mt-2">Drag & Drop or Browse</span>
-                <span className="text-sm text-gray-500 mt-1">Upload medical records (PDF, DOC, TXT)</span>
-              </div>
-              <input 
-                type="file" 
-                className="hidden" 
-                onChange={handleFileChange}
-                accept=".pdf,.doc,.docx,.txt"
-              />
-              <div className="mt-4 bg-white border border-gray-300 rounded-md px-4 py-2 w-full max-w-lg mx-auto text-sm text-gray-600">
-                <strong>Choose File</strong> &nbsp; {fileName}
-              </div>
-            </label>
-            <div className="mt-4">
-              <button className="bg-gradient-to-r from-[#5F5AE8] to-[#BB5AE7] text-white px-6 py-3 rounded-lg hover:opacity-90 transition">
-                Process File
-              </button>
-              <p className="text-xs text-gray-500 mt-2">File upload processing not yet implemented</p>
-            </div>
-          </div>
-        );
       case "mychart":
         return (
           <div className="text-center text-gray-700 mt-6">
@@ -640,21 +608,6 @@ export default function Patient() {
           className="bg-white rounded-xl p-8 shadow-sm border border-gray-200"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <button
-              onClick={() => setMethod("upload")}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                method === "upload"
-                  ? "border-purple-500 bg-purple-50 text-purple-700"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="text-center">
-                <UploadCloud size={32} className="mx-auto mb-2" />
-                <h3 className="font-semibold">Upload Records</h3>
-                <p className="text-sm text-gray-600">Upload your medical files</p>
-              </div>
-            </button>
-
             <button
               onClick={() => setMethod("history")}
               className={`p-4 rounded-lg border-2 transition-all ${
