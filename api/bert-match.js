@@ -3,25 +3,42 @@ import path from 'path';
 import Papa from 'papaparse';
 import { pipeline } from '@xenova/transformers';
 
-let bertModel = null;
+let model = null;
+let trialEmbeddings = null;
+let trialsMap = null;
 
-async function getBertModel() {
-  if (!bertModel) {
-    bertModel = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+async function initializeMatcher() {
+  if (model && trialEmbeddings && trialsMap) {
+    return; // Already initialized
   }
-  return bertModel;
+
+  // Load the model
+  model = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+
+  // Load pre-computed trial embeddings
+  const embeddingsPath = path.join(process.cwd(), 'trial_embeddings.json');
+  const embeddingsData = fs.readFileSync(embeddingsPath, 'utf8');
+  trialEmbeddings = JSON.parse(embeddingsData);
+
+  // Load trial data to map NCTId back to trial info
+  const csvPath = path.join(process.cwd(), 'filtered_trials.csv');
+  const csvData = fs.readFileSync(csvPath, 'utf8');
+  const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
+  
+  trialsMap = new Map();
+  for (const trial of parsed.data) {
+    trialsMap.set(trial.NCTId, trial);
+  }
 }
 
 function meanPool(embeddings) {
-  // embeddings: [tokens, dims] => [dims]
-  const dims = embeddings[0].length;
-  const avg = new Array(dims).fill(0);
+  const avg = new Array(embeddings[0].length).fill(0);
   for (const vec of embeddings) {
-    for (let d = 0; d < dims; d++) {
+    for (let d = 0; d < vec.length; d++) {
       avg[d] += vec[d];
     }
   }
-  for (let d = 0; d < dims; d++) {
+  for (let d = 0; d < avg.length; d++) {
     avg[d] /= embeddings.length;
   }
   return avg;
@@ -37,35 +54,13 @@ function cosineSimilarity(a, b) {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function readTrialsFromCSV() {
-  // Path for Vercel deployment, where `includeFiles` places the file at the root
-  const vercelPath = path.join(process.cwd(), 'filtered_trials.csv');
-  
-  if (fs.existsSync(vercelPath)) {
-    const csvData = fs.readFileSync(vercelPath, 'utf8');
-    const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
-    return parsed.data;
-  }
-
-  // Fallback path for local development from inside the /api directory
-  const localPath = path.join(__dirname, '../filtered_trials.csv');
-  if (fs.existsSync(localPath)) {
-    const csvData = fs.readFileSync(localPath, 'utf8');
-    const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
-    return parsed.data;
-  }
-
-  throw new Error(`filtered_trials.csv not found. Checked paths: ${vercelPath} and ${localPath}`);
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
@@ -78,76 +73,37 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Patient description is required' });
     }
 
-    // Read trials from CSV
-    let trials;
-    try {
-      trials = readTrialsFromCSV();
-    } catch (e) {
-      return res.status(500).json({ error: e.message });
-    }
-
-    // Prepare trial texts
-    const trialTexts = trials.map(trial => `
-      Condition: ${trial.Condition || ''}
-      Title: ${trial.BriefTitle || ''}
-      Summary: ${trial.BriefSummary || ''}
-      Inclusion: ${trial.InclusionCriteria || ''}
-      Intervention: ${trial.InterventionName || ''}
-      Phase: ${trial.Phase || ''}
-      Status: ${trial.OverallStatus || ''}
-    `.trim());
-
-    // Load BERT model
-    const model = await getBertModel();
+    await initializeMatcher();
 
     // Compute patient embedding
-    const patientEmbeddingTokens = await model(patientDescription);
-    const patientEmbedding = meanPool(patientEmbeddingTokens.data[0]);
-
-    // Compute trial embeddings in batches
-    const batchSize = 10;
-    const trialEmbeddings = [];
-    for (let i = 0; i < trialTexts.length; i += batchSize) {
-      const batch = trialTexts.slice(i, i + batchSize);
-      const batchEmbeddings = await model(batch);
-      for (const tokens of batchEmbeddings.data) {
-        trialEmbeddings.push(meanPool(tokens));
-      }
-    }
+    const patientEmbeddingTokens = await model(patientDescription, { pooling: 'mean', normalize: true });
+    const patientEmbedding = patientEmbeddingTokens.data;
+    
+    const nctIds = Object.keys(trialEmbeddings);
 
     // Compute similarities
-    const similarities = trialEmbeddings.map(e => cosineSimilarity(patientEmbedding, e));
-    // Get topK indices
-    const topIndices = similarities
-      .map((score, idx) => ({ score, idx }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK)
-      .map(item => item.idx);
-
-    // Prepare matches
-    const matches = topIndices.map(idx => {
-      const trial = trials[idx];
-      return {
-        nct_id: trial.NCTId,
-        title: trial.BriefTitle,
-        condition: trial.Condition,
-        summary: trial.BriefSummary,
-        inclusion: trial.InclusionCriteria,
-        exclusion: trial.ExclusionCriteria,
-        country: trial.LocationCountry,
-        status: trial.OverallStatus,
-        phase: trial.Phase,
-        enrollment: trial.EnrollmentCount,
-        contact_name: trial.ContactName,
-        contact_role: trial.ContactRole,
-        contact_phone: trial.ContactPhone,
-        contact_email: trial.ContactEmail,
-        lead_sponsor: trial.LeadSponsor,
-        sponsor_type: trial.SponsorType
-      };
+    const similarities = nctIds.map(nctId => {
+        const trialEmbedding = trialEmbeddings[nctId];
+        return cosineSimilarity(patientEmbedding, trialEmbedding);
     });
 
-    res.status(200).json({ matches, total_found: matches.length, method: 'bert' });
+    // Get topK indices
+    const topResults = similarities
+      .map((score, idx) => ({ score, idx }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK);
+      
+    const matches = topResults.map(item => {
+        const nctId = nctIds[item.idx];
+        const trial = trialsMap.get(nctId);
+        return {
+          ...trial, // Return all data from the CSV row
+          score: item.score
+        };
+    });
+
+    res.status(200).json(matches);
+
   } catch (error) {
     console.error('Error in bert-match endpoint:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
