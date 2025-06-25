@@ -1,5 +1,14 @@
 services:
   - type: web
+    name: nxtcure-node-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    autoDeploy: true
+    rootDir: nxtcure-frontend
+
+  - type: web
     name: nxtcure-app
     env: python
     # Python version is set via runtime.txt (python-3.10.13)
