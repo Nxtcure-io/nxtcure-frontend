@@ -2,9 +2,7 @@ services:
   - type: web
     name: nxtcure-app
     env: python
-    buildCommand: |
-      cd nxtcure-frontend && npm install && npm run build
-      pip install -r requirements-simple.txt
+    buildCommand: cd nxtcure-frontend && npm install && npm run build && pip install -r requirements-simple.txt
     startCommand: python backend/main.py
     plan: free
     envVars:
