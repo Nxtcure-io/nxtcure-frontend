@@ -7,6 +7,7 @@ import trialsDataHandler from './trials-data.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const BASE_PATH = process.env.API_BASE_PATH || '/api';
 
 app.use(bodyParser.json());
 
@@ -26,10 +27,10 @@ function adaptHandler(handler) {
   };
 }
 
-app.all('/api/match', adaptHandler(matchHandler));
-app.all('/api/bert-match', adaptHandler(bertMatchHandler));
-app.all('/api/health', adaptHandler(healthHandler));
-app.all('/api/trials-data', adaptHandler(trialsDataHandler));
+app.all(`${BASE_PATH}/match`, adaptHandler(matchHandler));
+app.all(`${BASE_PATH}/bert-match`, adaptHandler(bertMatchHandler));
+app.all(`${BASE_PATH}/health`, adaptHandler(healthHandler));
+app.all(`${BASE_PATH}/trials-data`, adaptHandler(trialsDataHandler));
 
 app.get('/', (req, res) => {
   res.send('Nxtcure Node.js API is running!');
