@@ -5,6 +5,8 @@ import numpy as np
 from sentence_transformers import SentenceTransformer, util
 import torch
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from fastapi.staticfiles import StaticFiles
 
 # Setup CORS for React frontend
 app = FastAPI()
@@ -97,6 +99,9 @@ def match_trials(request: PatientRequest):
 def read_root():
     return {"message": "Clinical Trials Matching API is running!", "status": "healthy"}
 
+# Serve React static files
+app.mount("/", StaticFiles(directory="../nxtcure-frontend/dist", html=True), name="static")
+
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 import re
+import os
 
 app = FastAPI()
 
@@ -146,5 +147,5 @@ def get_stats():
         return {"error": "No data loaded"}
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port) 
