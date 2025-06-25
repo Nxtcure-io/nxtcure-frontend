@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 import matchHandler from './match.js';
 import bertMatchHandler from './bert-match.js';
 import healthHandler from './health.js';
@@ -8,6 +9,15 @@ import trialsDataHandler from './trials-data.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_PATH = process.env.API_BASE_PATH || '/api';
+
+// CORS setup
+const allowedOrigins = [
+  'https://nxtcure-frontend-15.onrender.com', // frontend URL
+];
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
 app.use(bodyParser.json());
 
